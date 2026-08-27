@@ -1,34 +1,36 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Image as ImageIcon,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Ruler,
+  Sparkles,
+  Upload,
+  User,
+} from "lucide-react";
 
-type DressType =
-  | "blouse"
-  | "dress"
-  | "skirt"
-  | "pants"
-  | "shirt"
-  | "saree_blouse";
+type DressType = "blouse" | "dress" | "skirt" | "trouser" | "shirt";
 
-type MeasurementField = {
-  key: string;
+type Measurement = {
   label: string;
-  description: string;
-  unit: string;
+  value: string;
+  unit: "cm" | "in";
 };
 
-type Measurements = Record<string, string>;
-
-type OrderForm = {
-  name: string;
-  whatsapp: string;
-  email: string;
-  address: string;
-  city: string;
-  notes: string;
+type Pricing = {
+  min: number;
+  max: number;
+  label: string;
 };
 
-const dressTypes: {
+const DRESS_TYPES: {
   value: DressType;
   label: string;
   description: string;
@@ -36,12 +38,12 @@ const dressTypes: {
   {
     value: "blouse",
     label: "Blouse",
-    description: "Custom blouse / top",
+    description: "Custom blouse with your reference design",
   },
   {
     value: "dress",
     label: "Dress",
-    description: "One-piece dress",
+    description: "Custom-made dress",
   },
   {
     value: "skirt",
@@ -49,71 +51,51 @@ const dressTypes: {
     description: "Custom skirt",
   },
   {
-    value: "pants",
-    label: "Pants",
-    description: "Trousers / pants",
+    value: "trouser",
+    label: "Trouser",
+    description: "Custom trousers",
   },
   {
     value: "shirt",
     label: "Shirt",
     description: "Custom shirt",
   },
-  {
-    value: "saree_blouse",
-    label: "Saree Blouse",
-    description: "Traditional blouse",
-  },
 ];
 
-const measurementGuide: Record<DressType, MeasurementField[]> = {
+const MEASUREMENTS: Record<
+  DressType,
+  { key: string; label: string; help: string }[]
+> = {
   blouse: [
     {
       key: "bust",
       label: "Bust",
-      description: "Measure around the fullest part of your bust.",
-      unit: "cm",
+      help: "Measure around the fullest part of your bust.",
     },
     {
       key: "waist",
       label: "Waist",
-      description: "Measure around the narrowest part of your waist.",
-      unit: "cm",
+      help: "Measure around your natural waist.",
     },
     {
       key: "shoulder",
       label: "Shoulder",
-      description: "Measure from one shoulder point to the other.",
-      unit: "cm",
+      help: "Measure from one shoulder point to the other.",
     },
     {
       key: "blouseLength",
       label: "Blouse Length",
-      description: "Measure from the shoulder down to your desired blouse length.",
-      unit: "cm",
+      help: "Measure from the shoulder down to your desired blouse length.",
     },
     {
       key: "sleeveLength",
       label: "Sleeve Length",
-      description: "Measure from the shoulder to the desired sleeve end.",
-      unit: "cm",
-    },
-    {
-      key: "upperArm",
-      label: "Upper Arm",
-      description: "Measure around the fullest part of your upper arm.",
-      unit: "cm",
+      help: "Measure from shoulder to your desired sleeve length.",
     },
     {
       key: "armhole",
       label: "Armhole",
-      description: "Measure around the armhole area.",
-      unit: "cm",
-    },
-    {
-      key: "neck",
-      label: "Neck",
-      description: "Measure around the base of your neck.",
-      unit: "cm",
+      help: "Measure around the armhole area.",
     },
   ],
 
@@ -121,50 +103,32 @@ const measurementGuide: Record<DressType, MeasurementField[]> = {
     {
       key: "bust",
       label: "Bust",
-      description: "Measure around the fullest part of your bust.",
-      unit: "cm",
+      help: "Measure around the fullest part of your bust.",
     },
     {
       key: "waist",
       label: "Waist",
-      description: "Measure around your natural waist.",
-      unit: "cm",
+      help: "Measure around your natural waist.",
     },
     {
       key: "hip",
       label: "Hip",
-      description: "Measure around the fullest part of your hips.",
-      unit: "cm",
+      help: "Measure around the fullest part of your hips.",
     },
     {
       key: "shoulder",
       label: "Shoulder",
-      description: "Measure from shoulder point to shoulder point.",
-      unit: "cm",
+      help: "Measure from one shoulder point to the other.",
     },
     {
       key: "dressLength",
       label: "Dress Length",
-      description: "Measure from shoulder to your desired dress length.",
-      unit: "cm",
+      help: "Measure from shoulder to your desired dress length.",
     },
     {
       key: "sleeveLength",
       label: "Sleeve Length",
-      description: "Measure from shoulder to sleeve end.",
-      unit: "cm",
-    },
-    {
-      key: "upperArm",
-      label: "Upper Arm",
-      description: "Measure around your upper arm.",
-      unit: "cm",
-    },
-    {
-      key: "neck",
-      label: "Neck",
-      description: "Measure around the base of your neck.",
-      unit: "cm",
+      help: "Measure from shoulder to your desired sleeve length.",
     },
   ],
 
@@ -172,65 +136,45 @@ const measurementGuide: Record<DressType, MeasurementField[]> = {
     {
       key: "waist",
       label: "Waist",
-      description: "Measure around your natural waist.",
-      unit: "cm",
+      help: "Measure around your natural waist.",
     },
     {
       key: "hip",
       label: "Hip",
-      description: "Measure around the fullest part of your hips.",
-      unit: "cm",
+      help: "Measure around the fullest part of your hips.",
     },
     {
       key: "skirtLength",
       label: "Skirt Length",
-      description: "Measure from your waist to your desired skirt length.",
-      unit: "cm",
-    },
-    {
-      key: "thigh",
-      label: "Thigh",
-      description: "Measure around the fullest part of your thigh.",
-      unit: "cm",
+      help: "Measure from waist to your desired skirt length.",
     },
   ],
 
-  pants: [
+  trouser: [
     {
       key: "waist",
       label: "Waist",
-      description: "Measure around your natural waist.",
-      unit: "cm",
+      help: "Measure around your natural waist.",
     },
     {
       key: "hip",
       label: "Hip",
-      description: "Measure around the fullest part of your hips.",
-      unit: "cm",
-    },
-    {
-      key: "inseam",
-      label: "Inseam",
-      description: "Measure from the crotch to the desired trouser length.",
-      unit: "cm",
-    },
-    {
-      key: "outseam",
-      label: "Outseam",
-      description: "Measure from waist to the bottom of the trousers.",
-      unit: "cm",
+      help: "Measure around the fullest part of your hips.",
     },
     {
       key: "thigh",
       label: "Thigh",
-      description: "Measure around the fullest part of your thigh.",
-      unit: "cm",
+      help: "Measure around the fullest part of your thigh.",
     },
     {
-      key: "bottom",
-      label: "Bottom",
-      description: "Measure around the desired ankle/bottom opening.",
-      unit: "cm",
+      key: "inseam",
+      label: "Inseam",
+      help: "Measure from crotch to the desired trouser length.",
+    },
+    {
+      key: "trouserLength",
+      label: "Trouser Length",
+      help: "Measure from waist to desired trouser length.",
     },
   ],
 
@@ -238,205 +182,147 @@ const measurementGuide: Record<DressType, MeasurementField[]> = {
     {
       key: "chest",
       label: "Chest",
-      description: "Measure around the fullest part of your chest.",
-      unit: "cm",
+      help: "Measure around the fullest part of your chest.",
     },
     {
       key: "waist",
       label: "Waist",
-      description: "Measure around your natural waist.",
-      unit: "cm",
+      help: "Measure around your natural waist.",
     },
     {
       key: "shoulder",
       label: "Shoulder",
-      description: "Measure from shoulder point to shoulder point.",
-      unit: "cm",
+      help: "Measure from one shoulder point to the other.",
     },
     {
       key: "shirtLength",
       label: "Shirt Length",
-      description: "Measure from shoulder to your desired shirt length.",
-      unit: "cm",
+      help: "Measure from shoulder to desired shirt length.",
     },
     {
       key: "sleeveLength",
       label: "Sleeve Length",
-      description: "Measure from shoulder to sleeve end.",
-      unit: "cm",
-    },
-    {
-      key: "neck",
-      label: "Neck",
-      description: "Measure around the base of your neck.",
-      unit: "cm",
-    },
-  ],
-
-  saree_blouse: [
-    {
-      key: "bust",
-      label: "Bust",
-      description: "Measure around the fullest part of your bust.",
-      unit: "cm",
-    },
-    {
-      key: "underBust",
-      label: "Under Bust",
-      description: "Measure directly below the bust.",
-      unit: "cm",
-    },
-    {
-      key: "waist",
-      label: "Waist",
-      description: "Measure around your natural waist.",
-      unit: "cm",
-    },
-    {
-      key: "shoulder",
-      label: "Shoulder",
-      description: "Measure from one shoulder point to the other.",
-      unit: "cm",
-    },
-    {
-      key: "blouseLength",
-      label: "Blouse Length",
-      description: "Measure from shoulder to desired blouse length.",
-      unit: "cm",
-    },
-    {
-      key: "sleeveLength",
-      label: "Sleeve Length",
-      description: "Measure from shoulder to sleeve end.",
-      unit: "cm",
-    },
-    {
-      key: "upperArm",
-      label: "Upper Arm",
-      description: "Measure around the fullest part of your upper arm.",
-      unit: "cm",
-    },
-    {
-      key: "neck",
-      label: "Neck",
-      description: "Measure around the base of your neck.",
-      unit: "cm",
+      help: "Measure from shoulder to desired sleeve length.",
     },
   ],
 };
 
-const basePrices: Record<DressType, number> = {
-  blouse: 3500,
-  dress: 6500,
-  skirt: 4000,
-  pants: 4500,
-  shirt: 4500,
-  saree_blouse: 4000,
+/*
+ * NORMAL SRI LANKAN ESTIMATES
+ *
+ * These are deliberately NOT AI-generated.
+ *
+ * Blouse with Masha fabric:
+ * Rs. 1,900 - Rs. 2,500
+ *
+ * You can change these values later if your tailor/material prices change.
+ */
+const BASE_PRICES: Record<DressType, Pricing> = {
+  blouse: {
+    min: 1900,
+    max: 2500,
+    label: "Blouse with Masha fabric",
+  },
+
+  dress: {
+    min: 3500,
+    max: 6500,
+    label: "Custom dress",
+  },
+
+  skirt: {
+    min: 2200,
+    max: 3500,
+    label: "Custom skirt",
+  },
+
+  trouser: {
+    min: 2500,
+    max: 4000,
+    label: "Custom trousers",
+  },
+
+  shirt: {
+    min: 2200,
+    max: 3500,
+    label: "Custom shirt",
+  },
 };
 
-const materialPrices: Record<DressType, number> = {
-  blouse: 3500,
-  dress: 5000,
-  skirt: 3000,
-  pants: 3200,
-  shirt: 3200,
-  saree_blouse: 4000,
+const DELIVERY_ESTIMATE = {
+  min: 300,
+  max: 800,
 };
 
-const sourcingCosts: Record<DressType, number> = {
-  blouse: 1000,
-  dress: 1500,
-  skirt: 1000,
-  pants: 1000,
-  shirt: 1000,
-  saree_blouse: 1200,
-};
-
-function formatLKR(value: number): string {
-  return `LKR ${Math.round(value).toLocaleString("en-LK")}`;
-}
-
-function getFilePreview(file: File | null): string {
-  if (!file) {
-    return "";
-  }
-
-  return URL.createObjectURL(file);
+function formatLKR(value: number) {
+  return `Rs. ${value.toLocaleString("en-LK")}`;
 }
 
 export default function TailorPage() {
   const [dressType, setDressType] = useState<DressType>("blouse");
 
-  const [frontImage, setFrontImage] = useState<File | null>(null);
-  const [backImage, setBackImage] = useState<File | null>(null);
+  const [frontImage, setFrontImage] = useState<string>("");
+  const [backImage, setBackImage] = useState<string>("");
 
-  const [frontPreview, setFrontPreview] = useState("");
-  const [backPreview, setBackPreview] = useState("");
+  const [measurements, setMeasurements] = useState<
+    Record<string, Measurement>
+  >({});
 
-  const [measurements, setMeasurements] = useState<Measurements>({});
+  const [customerName, setCustomerName] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [notes, setNotes] = useState("");
 
-  const [activeGuide, setActiveGuide] = useState<string>("bust");
+  const [step, setStep] = useState(1);
+  const [orderSent, setOrderSent] = useState(false);
 
-  const [orderForm, setOrderForm] = useState<OrderForm>({
-    name: "",
-    whatsapp: "",
-    email: "",
-    address: "",
-    city: "",
-    notes: "",
-  });
+  const currentMeasurements = MEASUREMENTS[dressType];
+  const currentPricing = BASE_PRICES[dressType];
 
-  const [submitted, setSubmitted] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const currentMeasurements = measurementGuide[dressType];
-
-  const completedMeasurements = useMemo(() => {
-    return currentMeasurements.filter(
-      (field) =>
-        measurements[field.key] &&
-        measurements[field.key].trim() !== ""
-    ).length;
+  const measurementComplete = useMemo(() => {
+    return currentMeasurements.every(
+      (measurement) =>
+        measurements[measurement.key]?.value?.trim().length > 0
+    );
   }, [currentMeasurements, measurements]);
 
-  const estimatedPrice = useMemo(() => {
-    const base = basePrices[dressType];
-    const material = materialPrices[dressType];
-    const sourcing = sourcingCosts[dressType];
+  const canContinueFromStep1 = Boolean(dressType);
 
-    const measurementCount = completedMeasurements;
+  const canContinueFromStep2 =
+    frontImage.length > 0 && backImage.length > 0;
 
-    const measurementAdjustment =
-      measurementCount >= currentMeasurements.length
-        ? 0
-        : 500;
+  const canContinueFromStep3 = measurementComplete;
 
-    const delivery = 700;
+  const canSubmit =
+    customerName.trim() !== "" &&
+    whatsapp.trim() !== "" &&
+    address.trim() !== "" &&
+    city.trim() !== "";
 
-    return base + material + sourcing + delivery + measurementAdjustment;
-  }, [dressType, completedMeasurements, currentMeasurements.length]);
+  /*
+   * PRICE LOGIC
+   *
+   * We do NOT use AI here.
+   *
+   * For blouse:
+   * Base = Rs. 1,900 - Rs. 2,500
+   *
+   * Delivery is displayed separately.
+   *
+   * The customer sees:
+   * Tailoring/material estimate
+   * Delivery estimate
+   * Approximate total
+   *
+   * The exact final price is confirmed through WhatsApp.
+   */
+  const estimatedTotal = {
+    min: currentPricing.min + DELIVERY_ESTIMATE.min,
+    max: currentPricing.max + DELIVERY_ESTIMATE.max,
+  };
 
-  function handleDressTypeChange(value: DressType) {
-    setDressType(value);
-    setMeasurements({});
-    setActiveGuide(measurementGuide[value][0]?.key || "");
-    setSubmitted(false);
-    setErrorMessage("");
-  }
-
-  function handleMeasurementChange(
-    key: string,
-    value: string
-  ) {
-    const cleaned = value.replace(/[^0-9.]/g, "");
-
-    setMeasurements((previous) => ({
-      ...previous,
-      [key]: cleaned,
-    }));
-  }
-
-  function handleImageChange(
+  function handleImageUpload(
     event: ChangeEvent<HTMLInputElement>,
     side: "front" | "back"
   ) {
@@ -447,821 +333,1026 @@ export default function TailorPage() {
     }
 
     if (!file.type.startsWith("image/")) {
-      setErrorMessage("Please upload an image file.");
+      alert("Please select an image file.");
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setErrorMessage("Please choose an image smaller than 10 MB.");
+      alert("Please select an image smaller than 10MB.");
       return;
     }
 
-    setErrorMessage("");
+    const reader = new FileReader();
 
-    if (side === "front") {
-      setFrontImage(file);
+    reader.onload = () => {
+      const result = reader.result;
 
-      const preview = getFilePreview(file);
-      setFrontPreview(preview);
-    } else {
-      setBackImage(file);
+      if (typeof result !== "string") {
+        return;
+      }
 
-      const preview = getFilePreview(file);
-      setBackPreview(preview);
-    }
+      if (side === "front") {
+        setFrontImage(result);
+      } else {
+        setBackImage(result);
+      }
+    };
+
+    reader.readAsDataURL(file);
   }
 
-  function handleCustomerChange(
-    field: keyof OrderForm,
-    value: string
-  ) {
-    setOrderForm((previous) => ({
+  function updateMeasurement(key: string, value: string) {
+    setMeasurements((previous) => ({
       ...previous,
-      [field]: value,
+      [key]: {
+        label:
+          currentMeasurements.find((item) => item.key === key)?.label || key,
+        value,
+        unit: previous[key]?.unit || "cm",
+      },
     }));
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function updateUnit(key: string, unit: "cm" | "in") {
+    setMeasurements((previous) => ({
+      ...previous,
+      [key]: {
+        label:
+          currentMeasurements.find((item) => item.key === key)?.label || key,
+        value: previous[key]?.value || "",
+        unit,
+      },
+    }));
+  }
+
+  function changeDressType(type: DressType) {
+    setDressType(type);
+    setMeasurements({});
+    setStep(1);
+    setOrderSent(false);
+  }
+
+  function nextStep() {
+    if (step === 1 && !canContinueFromStep1) {
+      return;
+    }
+
+    if (step === 2 && !canContinueFromStep2) {
+      alert("Please upload both front and back reference images.");
+      return;
+    }
+
+    if (step === 3 && !canContinueFromStep3) {
+      alert("Please complete all required measurements.");
+      return;
+    }
+
+    setStep((previous) => Math.min(previous + 1, 5));
+  }
+
+  function previousStep() {
+    setStep((previous) => Math.max(previous - 1, 1));
+  }
+
+  function submitOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    setErrorMessage("");
-
-    if (!frontImage || !backImage) {
-      setErrorMessage(
-        "Please upload both the front and back reference images."
-      );
+    if (!canSubmit) {
+      alert("Please complete your name, WhatsApp number and address.");
       return;
     }
 
-    if (completedMeasurements !== currentMeasurements.length) {
-      setErrorMessage(
-        "Please complete all required measurements for the selected dress type."
-      );
-      return;
-    }
-
-    if (!orderForm.name.trim()) {
-      setErrorMessage("Please enter your name.");
-      return;
-    }
-
-    if (!orderForm.whatsapp.trim()) {
-      setErrorMessage("Please enter your WhatsApp number.");
-      return;
-    }
-
-    if (!orderForm.address.trim()) {
-      setErrorMessage("Please enter your delivery address.");
-      return;
-    }
-
-    if (!orderForm.city.trim()) {
-      setErrorMessage("Please enter your city.");
-      return;
-    }
-
-    setSubmitted(true);
+    setOrderSent(true);
   }
 
-  function resetOrder() {
-    setSubmitted(false);
-    setErrorMessage("");
-  }
+  function openWhatsApp() {
+    const phone = whatsapp.replace(/[^\d+]/g, "");
 
-  if (submitted) {
-    return (
-      <main className="min-h-screen bg-[#fffaf9] px-5 py-12 text-[#211b1d]">
-        <div className="mx-auto max-w-3xl">
-          <div className="rounded-[2rem] border border-black/10 bg-white p-8 text-center shadow-xl sm:p-12">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#f8e8ed] text-4xl">
-              ✓
-            </div>
+    const measurementText = currentMeasurements
+      .map((item) => {
+        const data = measurements[item.key];
 
-            <p className="mt-7 text-xs font-semibold uppercase tracking-[0.25em] text-[#b85c78]">
-              Request received
-            </p>
+        if (!data) {
+          return `${item.label}: Not provided`;
+        }
 
-            <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-              Thank you, {orderForm.name}
-            </h1>
+        return `${item.label}: ${data.value} ${data.unit}`;
+      })
+      .join("\n");
 
-            <p className="mx-auto mt-6 max-w-xl text-sm leading-7 text-black/55">
-              We have received your custom tailoring request and your
-              reference images and measurements.
-            </p>
+    const message = [
+      "Hello Atelier AI, I would like to place a custom tailoring order.",
+      "",
+      `Dress type: ${DRESS_TYPES.find((item) => item.value === dressType)?.label}`,
+      "",
+      "Measurements:",
+      measurementText,
+      "",
+      `Customer name: ${customerName}`,
+      `WhatsApp: ${whatsapp}`,
+      `City: ${city}`,
+      `Address: ${address}`,
+      "",
+      `Estimate: ${formatLKR(estimatedTotal.min)} - ${formatLKR(
+        estimatedTotal.max
+      )}`,
+      "",
+      "The displayed amount is only an estimate. Please contact me with the exact price and further information.",
+      "",
+      notes ? `Additional notes: ${notes}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
 
-            <div className="mx-auto mt-8 max-w-md rounded-2xl bg-[#f8f1f0] p-5 text-left">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-black/50">
-                  Estimated range
-                </span>
+    /*
+     * Change this number to your business WhatsApp number.
+     *
+     * IMPORTANT:
+     * Use the international format without + or spaces.
+     *
+     * Example Sri Lanka:
+     * 94771234567
+     */
+    const businessWhatsAppNumber = "947XXXXXXXX";
 
-                <span className="text-lg font-semibold">
-                  {formatLKR(estimatedPrice - 1000)} -{" "}
-                  {formatLKR(estimatedPrice + 1500)}
-                </span>
-              </div>
+    const url = `https://wa.me/${businessWhatsAppNumber}?text=${encodeURIComponent(
+      message
+    )}`;
 
-              <p className="mt-3 text-xs leading-5 text-black/45">
-                This is only an approximate estimate. The final price depends
-                on the actual fabric, design details, tailoring work and
-                delivery.
-              </p>
-            </div>
+    window.open(url, "_blank", "noopener,noreferrer");
 
-            <div className="mt-8 rounded-2xl border border-[#e4c3cd] bg-[#fff8fa] p-5 text-left">
-              <p className="font-semibold">
-                We will contact you through WhatsApp
-              </p>
-
-              <p className="mt-2 text-sm leading-6 text-black/55">
-                We will contact you on WhatsApp for more information,
-                confirmation of the design, exact material requirements and
-                the final exact price.
-              </p>
-            </div>
-
-            <p className="mt-6 text-sm text-black/45">
-              WhatsApp: {orderForm.whatsapp}
-            </p>
-
-            <button
-              type="button"
-              onClick={resetOrder}
-              className="mt-8 rounded-full bg-[#211b1d] px-7 py-3.5 text-sm font-medium text-white transition hover:bg-[#b85c78]"
-            >
-              Create another request
-            </button>
-          </div>
-        </div>
-      </main>
-    );
+    /*
+     * "phone" is intentionally calculated above so the customer's
+     * WhatsApp number can be included in the order message if needed.
+     */
+    void phone;
   }
 
   return (
     <main className="min-h-screen bg-[#fffaf9] text-[#211b1d]">
-      <header className="border-b border-black/[0.06] bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 lg:px-8">
-          <a href="/" className="font-semibold tracking-tight">
-            Atelier AI
-          </a>
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 border-b border-black/[0.06] bg-[#fffaf9]/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-5 lg:px-8">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#211b1d] text-white">
+              <Sparkles size={18} />
+            </div>
 
-          <a
-            href="/ai-studio"
-            className="rounded-full border border-black/10 px-4 py-2 text-sm transition hover:bg-black hover:text-white"
+            <div>
+              <p className="text-lg font-semibold">Atelier AI</p>
+              <p className="text-[10px] uppercase tracking-[0.25em] text-black/40">
+                Custom Tailoring
+              </p>
+            </div>
+          </Link>
+
+          <Link
+            href="/"
+            className="flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm font-medium transition hover:bg-black/[0.03]"
           >
-            AI Studio
-          </a>
+            <ArrowLeft size={15} />
+            Home
+          </Link>
         </div>
       </header>
 
-      <section className="mx-auto max-w-7xl px-5 pb-20 pt-12 lg:px-8">
-        <div className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#b85c78]">
+      {/* PAGE INTRO */}
+      <section className="mx-auto max-w-5xl px-5 pb-10 pt-10 lg:px-8 lg:pt-16">
+        <div className="text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f8e8ed] text-[#b85c78]">
+            <Ruler size={24} />
+          </div>
+
+          <p className="mt-6 text-xs font-semibold uppercase tracking-[0.25em] text-[#b85c78]">
             Custom tailoring
           </p>
 
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-6xl">
-            Make your reference
-            <br />
-            <span className="text-[#b85c78]">fit you perfectly.</span>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
+            Make your reference fit you.
           </h1>
 
-          <p className="mt-6 max-w-2xl text-base leading-7 text-black/55">
-            Choose your garment, upload the front and back reference images,
-            enter the measurements needed for that garment, and request a
-            custom-made order.
+          <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-black/50 sm:text-base">
+            Choose your garment, upload the front and back reference,
+            enter only the measurements needed for that garment, and send
+            your order request.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-8 lg:grid-cols-[1.35fr_0.65fr]">
-          <div className="space-y-8">
-            {/* DRESS TYPE */}
-            <section className="rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm sm:p-8">
-              <div className="flex items-start justify-between gap-5">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-black/35">
-                    Step 01
-                  </p>
+        {/* PROGRESS */}
+        <div className="mx-auto mt-10 flex max-w-3xl items-center">
+          {[1, 2, 3, 4, 5].map((number, index) => {
+            const active = number <= step;
 
-                  <h2 className="mt-2 text-2xl font-semibold">
-                    Select your garment
-                  </h2>
-
-                  <p className="mt-2 text-sm text-black/45">
-                    Measurements will automatically change based on your
-                    selection.
-                  </p>
+            return (
+              <div
+                key={number}
+                className="flex flex-1 items-center last:flex-none"
+              >
+                <div
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition ${
+                    active
+                      ? "bg-[#211b1d] text-white"
+                      : "bg-black/[0.06] text-black/35"
+                  }`}
+                >
+                  {number < step ? <Check size={15} /> : number}
                 </div>
+
+                {index < 4 && (
+                  <div
+                    className={`mx-2 h-px flex-1 transition ${
+                      number < step ? "bg-[#211b1d]" : "bg-black/10"
+                    }`}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* MAIN */}
+      <section className="mx-auto max-w-5xl px-5 pb-24 lg:px-8">
+        <div className="overflow-hidden rounded-[2rem] border border-black/[0.07] bg-white shadow-xl shadow-black/[0.04]">
+          {/* STEP 1 */}
+          {step === 1 && (
+            <div className="p-6 sm:p-10">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-black/35">
+                  Step 01
+                </p>
+
+                <h2 className="mt-2 text-2xl font-semibold">
+                  What do you want made?
+                </h2>
+
+                <p className="mt-2 text-sm text-black/45">
+                  Select the garment type. We will only ask for the useful
+                  measurements for that garment.
+                </p>
               </div>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {dressTypes.map((type) => {
-                  const selected = dressType === type.value;
+              <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {DRESS_TYPES.map((item) => {
+                  const selected = dressType === item.value;
 
                   return (
                     <button
-                      key={type.value}
+                      key={item.value}
                       type="button"
-                      onClick={() =>
-                        handleDressTypeChange(type.value)
-                      }
-                      className={`rounded-2xl border p-4 text-left transition ${
+                      onClick={() => changeDressType(item.value)}
+                      className={`rounded-3xl border p-5 text-left transition ${
                         selected
-                          ? "border-[#b85c78] bg-[#fff3f6]"
-                          : "border-black/10 bg-white hover:border-black/20"
+                          ? "border-[#b85c78] bg-[#f8e8ed] shadow-lg shadow-[#b85c78]/10"
+                          : "border-black/10 hover:border-black/20 hover:bg-black/[0.02]"
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold">
-                          {type.label}
-                        </span>
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#211b1d] text-white">
+                          <Ruler size={19} />
+                        </div>
 
-                        <span
-                          className={`flex h-5 w-5 items-center justify-center rounded-full border ${
-                            selected
-                              ? "border-[#b85c78] bg-[#b85c78] text-white"
-                              : "border-black/20"
-                          }`}
-                        >
-                          {selected ? "✓" : ""}
-                        </span>
+                        {selected && (
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#b85c78] text-white">
+                            <Check size={14} />
+                          </div>
+                        )}
                       </div>
 
-                      <p className="mt-2 text-xs text-black/45">
-                        {type.description}
+                      <h3 className="mt-5 font-semibold">{item.label}</h3>
+
+                      <p className="mt-2 text-xs leading-5 text-black/45">
+                        {item.description}
                       </p>
                     </button>
                   );
                 })}
               </div>
-            </section>
 
-            {/* REFERENCES */}
-            <section className="rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm sm:p-8">
+              {/* BLOUSE PRICE PREVIEW */}
+              {dressType === "blouse" && (
+                <div className="mt-8 rounded-3xl border border-[#e7c4ce] bg-[#fff7f9] p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#f8e8ed] text-[#b85c78]">
+                      <Sparkles size={18} />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold">
+                        Blouse estimate
+                      </p>
+
+                      <p className="mt-1 text-xs leading-5 text-black/50">
+                        Our normal estimate for a blouse using Masha fabric
+                        is:
+                      </p>
+
+                      <p className="mt-3 text-xl font-semibold text-[#b85c78]">
+                        {formatLKR(currentPricing.min)} -{" "}
+                        {formatLKR(currentPricing.max)}
+                      </p>
+
+                      <p className="mt-2 text-[11px] leading-5 text-black/40">
+                        This is only an approximate price. The exact price
+                        will be confirmed after we check your reference,
+                        measurements, material and requirements.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-8 flex justify-end">
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  disabled={!canContinueFromStep1}
+                  className="flex items-center gap-2 rounded-full bg-[#211b1d] px-6 py-3.5 text-sm font-medium text-white transition hover:bg-[#b85c78] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Continue
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2 */}
+          {step === 2 && (
+            <div className="p-6 sm:p-10">
               <p className="text-xs uppercase tracking-[0.2em] text-black/35">
                 Step 02
               </p>
 
               <h2 className="mt-2 text-2xl font-semibold">
-                Add your reference
+                Upload your reference
+              </h2>
+
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-black/45">
+                Upload both the front and back image of the clothing you want
+                us to make.
+              </p>
+
+              <div className="mt-8 grid gap-5 md:grid-cols-2">
+                {/* FRONT */}
+                <div>
+                  <p className="mb-3 text-sm font-semibold">Front image</p>
+
+                  <label className="group relative flex min-h-[360px] cursor-pointer items-center justify-center overflow-hidden rounded-[2rem] border-2 border-dashed border-black/10 bg-[#faf7f6] transition hover:border-[#b85c78]">
+                    {frontImage ? (
+                      <>
+                        <img
+                          src={frontImage}
+                          alt="Front reference"
+                          className="absolute inset-0 h-full w-full object-cover"
+                        />
+
+                        <div className="absolute inset-x-0 bottom-0 bg-black/55 p-4 text-center text-xs font-medium text-white backdrop-blur">
+                          Click to change image
+                        </div>
+                      </>
+                    ) : (
+                      <div className="px-6 text-center">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f8e8ed] text-[#b85c78]">
+                          <Upload size={22} />
+                        </div>
+
+                        <p className="mt-5 text-sm font-semibold">
+                          Upload front
+                        </p>
+
+                        <p className="mt-2 text-xs leading-5 text-black/40">
+                          JPG, PNG or WEBP
+                          <br />
+                          Maximum 10MB
+                        </p>
+                      </div>
+                    )}
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(event) =>
+                        handleImageUpload(event, "front")
+                      }
+                    />
+                  </label>
+                </div>
+
+                {/* BACK */}
+                <div>
+                  <p className="mb-3 text-sm font-semibold">Back image</p>
+
+                  <label className="group relative flex min-h-[360px] cursor-pointer items-center justify-center overflow-hidden rounded-[2rem] border-2 border-dashed border-black/10 bg-[#faf7f6] transition hover:border-[#b85c78]">
+                    {backImage ? (
+                      <>
+                        <img
+                          src={backImage}
+                          alt="Back reference"
+                          className="absolute inset-0 h-full w-full object-cover"
+                        />
+
+                        <div className="absolute inset-x-0 bottom-0 bg-black/55 p-4 text-center text-xs font-medium text-white backdrop-blur">
+                          Click to change image
+                        </div>
+                      </>
+                    ) : (
+                      <div className="px-6 text-center">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f8e8ed] text-[#b85c78]">
+                          <ImageIcon size={22} />
+                        </div>
+
+                        <p className="mt-5 text-sm font-semibold">
+                          Upload back
+                        </p>
+
+                        <p className="mt-2 text-xs leading-5 text-black/40">
+                          JPG, PNG or WEBP
+                          <br />
+                          Maximum 10MB
+                        </p>
+                      </div>
+                    )}
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(event) =>
+                        handleImageUpload(event, "back")
+                      }
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="mt-6 rounded-2xl bg-[#f7f4f3] p-4 text-xs leading-5 text-black/50">
+                <strong className="text-black/70">
+                  Reference tip:
+                </strong>{" "}
+                Use clear photos where the garment is visible. Front and
+                back references help the tailor understand the design more
+                accurately.
+              </div>
+
+              <div className="mt-8 flex justify-between">
+                <button
+                  type="button"
+                  onClick={previousStep}
+                  className="flex items-center gap-2 rounded-full border border-black/10 px-5 py-3.5 text-sm font-medium"
+                >
+                  <ArrowLeft size={16} />
+                  Back
+                </button>
+
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  disabled={!canContinueFromStep2}
+                  className="flex items-center gap-2 rounded-full bg-[#211b1d] px-6 py-3.5 text-sm font-medium text-white transition hover:bg-[#b85c78] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Measurements
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3 */}
+          {step === 3 && (
+            <div className="p-6 sm:p-10">
+              <p className="text-xs uppercase tracking-[0.2em] text-black/35">
+                Step 03
+              </p>
+
+              <h2 className="mt-2 text-2xl font-semibold">
+                Your measurements
               </h2>
 
               <p className="mt-2 text-sm leading-6 text-black/45">
-                Upload clear front and back images of the clothing design you
-                want us to make.
+                Enter the measurements needed for your{" "}
+                {
+                  DRESS_TYPES.find((item) => item.value === dressType)
+                    ?.label
+                }
+                .
               </p>
 
-              <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                <label className="group cursor-pointer">
-                  <div className="relative flex min-h-[280px] items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-black/10 bg-[#faf6f5] transition group-hover:border-[#b85c78]">
-                    {frontPreview ? (
-                      <img
-                        src={frontPreview}
-                        alt="Front reference preview"
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="px-6 text-center">
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl shadow-sm">
-                          ↑
-                        </div>
-
-                        <p className="mt-4 font-semibold">
-                          Front image
-                        </p>
-
-                        <p className="mt-2 text-xs leading-5 text-black/40">
-                          Upload the front view of your reference.
-                        </p>
-                      </div>
-                    )}
-
-                    {frontPreview && (
-                      <div className="absolute bottom-4 left-4 rounded-full bg-white/90 px-4 py-2 text-xs font-semibold shadow-lg">
-                        Change front image
-                      </div>
-                    )}
-                  </div>
-
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(event) =>
-                      handleImageChange(event, "front")
-                    }
-                  />
-                </label>
-
-                <label className="group cursor-pointer">
-                  <div className="relative flex min-h-[280px] items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-black/10 bg-[#faf6f5] transition group-hover:border-[#b85c78]">
-                    {backPreview ? (
-                      <img
-                        src={backPreview}
-                        alt="Back reference preview"
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="px-6 text-center">
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl shadow-sm">
-                          ↑
-                        </div>
-
-                        <p className="mt-4 font-semibold">
-                          Back image
-                        </p>
-
-                        <p className="mt-2 text-xs leading-5 text-black/40">
-                          Upload the back view of your reference.
-                        </p>
-                      </div>
-                    )}
-
-                    {backPreview && (
-                      <div className="absolute bottom-4 left-4 rounded-full bg-white/90 px-4 py-2 text-xs font-semibold shadow-lg">
-                        Change back image
-                      </div>
-                    )}
-                  </div>
-
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(event) =>
-                      handleImageChange(event, "back")
-                    }
-                  />
-                </label>
-              </div>
-            </section>
-
-            {/* MEASUREMENTS */}
-            <section className="rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm sm:p-8">
-              <div className="flex flex-col justify-between gap-5 sm:flex-row">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-black/35">
-                    Step 03
-                  </p>
-
-                  <h2 className="mt-2 text-2xl font-semibold">
-                    Your measurements
-                  </h2>
-
-                  <p className="mt-2 text-sm leading-6 text-black/45">
-                    Only the measurements needed for{" "}
-                    <strong className="text-black/70">
-                      {dressTypes.find(
-                        (item) => item.value === dressType
-                      )?.label}
-                    </strong>{" "}
-                    are shown.
-                  </p>
-                </div>
-
-                <div className="rounded-full bg-[#f8e8ed] px-4 py-2 text-xs font-semibold text-[#8f425d]">
-                  {completedMeasurements}/{currentMeasurements.length}{" "}
-                  completed
-                </div>
-              </div>
-
-              <div className="mt-7 grid gap-3">
-                {currentMeasurements.map((field) => {
-                  const active = activeGuide === field.key;
-                  const completed =
-                    measurements[field.key]?.trim() !== "";
+              <div className="mt-8 grid gap-5 sm:grid-cols-2">
+                {currentMeasurements.map((item) => {
+                  const measurement = measurements[item.key];
 
                   return (
                     <div
-                      key={field.key}
-                      className={`rounded-2xl border p-4 transition ${
-                        active
-                          ? "border-[#b85c78] bg-[#fff8fa]"
-                          : "border-black/10"
-                      }`}
+                      key={item.key}
+                      className="rounded-3xl border border-black/10 p-5"
                     >
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setActiveGuide(field.key)
+                      <label
+                        htmlFor={item.key}
+                        className="text-sm font-semibold"
+                      >
+                        {item.label}
+                      </label>
+
+                      <p className="mt-1 text-xs leading-5 text-black/40">
+                        {item.help}
+                      </p>
+
+                      <div className="mt-4 flex gap-2">
+                        <input
+                          id={item.key}
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          value={measurement?.value || ""}
+                          onChange={(event) =>
+                            updateMeasurement(
+                              item.key,
+                              event.target.value
+                            )
                           }
-                          className="text-left"
+                          placeholder="Enter measurement"
+                          className="min-w-0 flex-1 rounded-2xl border border-black/10 bg-[#faf8f7] px-4 py-3 text-sm outline-none transition focus:border-[#b85c78] focus:ring-2 focus:ring-[#b85c78]/10"
+                        />
+
+                        <select
+                          value={measurement?.unit || "cm"}
+                          onChange={(event) =>
+                            updateUnit(
+                              item.key,
+                              event.target.value as "cm" | "in"
+                            )
+                          }
+                          className="rounded-2xl border border-black/10 bg-[#faf8f7] px-3 py-3 text-sm outline-none"
                         >
-                          <div className="flex items-center gap-3">
-                            <span
-                              className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
-                                completed
-                                  ? "bg-[#b85c78] text-white"
-                                  : "bg-[#f3eeee] text-black/45"
-                              }`}
-                            >
-                              {completed ? "✓" : "?"}
-                            </span>
-
-                            <div>
-                              <p className="text-sm font-semibold">
-                                {field.label}
-                              </p>
-
-                              <p className="mt-1 text-xs text-black/40">
-                                {field.description}
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-
-                        <div className="relative w-full sm:w-36">
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            value={measurements[field.key] || ""}
-                            onChange={(event) =>
-                              handleMeasurementChange(
-                                field.key,
-                                event.target.value
-                              )
-                            }
-                            placeholder="0"
-                            className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 pr-12 text-sm outline-none transition focus:border-[#b85c78] focus:ring-2 focus:ring-[#b85c78]/10"
-                          />
-
-                          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-black/35">
-                            {field.unit}
-                          </span>
-                        </div>
+                          <option value="cm">cm</option>
+                          <option value="in">in</option>
+                        </select>
                       </div>
-
-                      {active && (
-                        <div className="mt-4 rounded-xl bg-white p-4 text-xs leading-5 text-black/50">
-                          <strong className="text-black/70">
-                            How to measure:
-                          </strong>{" "}
-                          {field.description} Keep the measuring tape
-                          comfortably fitted without pulling it too tight.
-                        </div>
-                      )}
                     </div>
                   );
                 })}
               </div>
 
-              {/* MEASUREMENT GUIDE */}
-              <div className="mt-6 rounded-3xl bg-[#f7f1ef] p-6">
-                <div className="flex gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-xl">
-                    📏
+              <div className="mt-6 rounded-2xl bg-[#f8e8ed] p-4 text-xs leading-5 text-[#8f425d]">
+                <strong>Measurement guide:</strong> Take measurements
+                without pulling the measuring tape too tightly. If you are
+                unsure, leave a note for the tailor and we can confirm the
+                measurement with you through WhatsApp.
+              </div>
+
+              <div className="mt-8 flex justify-between">
+                <button
+                  type="button"
+                  onClick={previousStep}
+                  className="flex items-center gap-2 rounded-full border border-black/10 px-5 py-3.5 text-sm font-medium"
+                >
+                  <ArrowLeft size={16} />
+                  Back
+                </button>
+
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  disabled={!canContinueFromStep3}
+                  className="flex items-center gap-2 rounded-full bg-[#211b1d] px-6 py-3.5 text-sm font-medium text-white transition hover:bg-[#b85c78] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Review price
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4 */}
+          {step === 4 && (
+            <div className="p-6 sm:p-10">
+              <p className="text-xs uppercase tracking-[0.2em] text-black/35">
+                Step 04
+              </p>
+
+              <h2 className="mt-2 text-2xl font-semibold">
+                Your estimated cost
+              </h2>
+
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-black/45">
+                This is a normal price estimate, not an AI-generated price.
+                The exact price will be confirmed by our tailoring team.
+              </p>
+
+              <div className="mt-8 overflow-hidden rounded-[2rem] border border-black/10">
+                <div className="bg-[#211b1d] p-6 text-white">
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/40">
+                    Approximate estimate
+                  </p>
+
+                  <p className="mt-3 text-4xl font-semibold">
+                    {formatLKR(estimatedTotal.min)} -{" "}
+                    {formatLKR(estimatedTotal.max)}
+                  </p>
+
+                  <p className="mt-2 text-xs text-white/45">
+                    Estimated total including delivery range
+                  </p>
+                </div>
+
+                <div className="divide-y divide-black/[0.06]">
+                  <div className="flex items-center justify-between p-5">
+                    <div>
+                      <p className="text-sm font-semibold">
+                        {currentPricing.label}
+                      </p>
+
+                      <p className="mt-1 text-xs text-black/40">
+                        Normal tailoring + material estimate
+                      </p>
+                    </div>
+
+                    <p className="text-sm font-semibold">
+                      {formatLKR(currentPricing.min)} -{" "}
+                      {formatLKR(currentPricing.max)}
+                    </p>
                   </div>
 
-                  <div>
-                    <h3 className="font-semibold">
-                      Measurement guide
-                    </h3>
+                  <div className="flex items-center justify-between p-5">
+                    <div>
+                      <p className="text-sm font-semibold">
+                        Delivery
+                      </p>
 
-                    <p className="mt-2 text-xs leading-5 text-black/50">
-                      Use a soft measuring tape. Stand naturally and keep the
-                      tape level around your body. Ask someone to help you for
-                      more accurate measurements.
-                    </p>
+                      <p className="mt-1 text-xs text-black/40">
+                        Estimated delivery range
+                      </p>
+                    </div>
 
-                    <p className="mt-3 text-xs font-medium text-[#8f425d]">
-                      Tip: Do not pull the tape too tightly.
+                    <p className="text-sm font-semibold">
+                      {formatLKR(DELIVERY_ESTIMATE.min)} -{" "}
+                      {formatLKR(DELIVERY_ESTIMATE.max)}
                     </p>
+                  </div>
+
+                  <div className="bg-[#fff7f9] p-5">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f8e8ed] text-[#b85c78]">
+                        <Sparkles size={16} />
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-semibold">
+                          Important
+                        </p>
+
+                        <p className="mt-1 text-xs leading-5 text-black/50">
+                          The price shown here is only an estimate. Material
+                          availability, design details, embroidery, special
+                          finishing, size requirements and delivery location
+                          can change the final price.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </section>
 
-            {/* CUSTOMER */}
-            <section className="rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm sm:p-8">
+              {dressType === "blouse" && (
+                <div className="mt-6 rounded-3xl border border-[#e7c4ce] bg-[#fff7f9] p-5">
+                  <p className="text-sm font-semibold">
+                    Masha blouse price
+                  </p>
+
+                  <p className="mt-2 text-xs leading-5 text-black/50">
+                    For a normal Masha-fabric blouse, we use a simple
+                    estimate of{" "}
+                    <strong className="text-black/70">
+                      {formatLKR(1900)} - {formatLKR(2500)}
+                    </strong>
+                    . We do not ask AI to calculate this price.
+                  </p>
+                </div>
+              )}
+
+              <div className="mt-8 flex justify-between">
+                <button
+                  type="button"
+                  onClick={previousStep}
+                  className="flex items-center gap-2 rounded-full border border-black/10 px-5 py-3.5 text-sm font-medium"
+                >
+                  <ArrowLeft size={16} />
+                  Back
+                </button>
+
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  className="flex items-center gap-2 rounded-full bg-[#211b1d] px-6 py-3.5 text-sm font-medium text-white transition hover:bg-[#b85c78]"
+                >
+                  Continue
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 5 */}
+          {step === 5 && !orderSent && (
+            <form onSubmit={submitOrder} className="p-6 sm:p-10">
               <p className="text-xs uppercase tracking-[0.2em] text-black/35">
-                Step 04
+                Step 05
               </p>
 
               <h2 className="mt-2 text-2xl font-semibold">
                 Your contact details
               </h2>
 
-              <p className="mt-2 text-sm leading-6 text-black/45">
-                We need these details so our tailoring team can contact you
-                about the order.
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-black/45">
+                Give us your details so our tailoring team can contact you
+                through WhatsApp and confirm the exact price.
               </p>
 
-              <form
-                onSubmit={handleSubmit}
-                className="mt-7 space-y-5"
-              >
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <label>
-                    <span className="text-xs font-semibold">
-                      Full name *
-                    </span>
+              <div className="mt-8 grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="customerName"
+                    className="text-sm font-semibold"
+                  >
+                    Full name *
+                  </label>
+
+                  <div className="relative mt-2">
+                    <User
+                      size={17}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30"
+                    />
 
                     <input
+                      id="customerName"
                       type="text"
-                      value={orderForm.name}
+                      value={customerName}
                       onChange={(event) =>
-                        handleCustomerChange(
-                          "name",
-                          event.target.value
-                        )
+                        setCustomerName(event.target.value)
                       }
                       placeholder="Your name"
-                      className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-[#b85c78]"
+                      className="w-full rounded-2xl border border-black/10 bg-[#faf8f7] py-3.5 pl-11 pr-4 text-sm outline-none transition focus:border-[#b85c78]"
+                      required
                     />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="whatsapp"
+                    className="text-sm font-semibold"
+                  >
+                    WhatsApp number *
                   </label>
 
-                  <label>
-                    <span className="text-xs font-semibold">
-                      WhatsApp number *
-                    </span>
+                  <div className="relative mt-2">
+                    <Phone
+                      size={17}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30"
+                    />
 
                     <input
+                      id="whatsapp"
                       type="tel"
-                      value={orderForm.whatsapp}
+                      value={whatsapp}
                       onChange={(event) =>
-                        handleCustomerChange(
-                          "whatsapp",
-                          event.target.value
-                        )
+                        setWhatsapp(event.target.value)
                       }
-                      placeholder="+94 7X XXX XXXX"
-                      className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-[#b85c78]"
+                      placeholder="07X XXX XXXX"
+                      className="w-full rounded-2xl border border-black/10 bg-[#faf8f7] py-3.5 pl-11 pr-4 text-sm outline-none transition focus:border-[#b85c78]"
+                      required
                     />
-                  </label>
+                  </div>
                 </div>
 
-                <label>
-                  <span className="text-xs font-semibold">
-                    Email
-                  </span>
+                <div>
+                  <label htmlFor="city" className="text-sm font-semibold">
+                    City *
+                  </label>
 
-                  <input
-                    type="email"
-                    value={orderForm.email}
-                    onChange={(event) =>
-                      handleCustomerChange(
-                        "email",
-                        event.target.value
-                      )
-                    }
-                    placeholder="you@example.com"
-                    className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-[#b85c78]"
-                  />
-                </label>
-
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <label>
-                    <span className="text-xs font-semibold">
-                      City *
-                    </span>
+                  <div className="relative mt-2">
+                    <MapPin
+                      size={17}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30"
+                    />
 
                     <input
+                      id="city"
                       type="text"
-                      value={orderForm.city}
-                      onChange={(event) =>
-                        handleCustomerChange(
-                          "city",
-                          event.target.value
-                        )
-                      }
+                      value={city}
+                      onChange={(event) => setCity(event.target.value)}
                       placeholder="Colombo"
-                      className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-[#b85c78]"
+                      className="w-full rounded-2xl border border-black/10 bg-[#faf8f7] py-3.5 pl-11 pr-4 text-sm outline-none transition focus:border-[#b85c78]"
+                      required
                     />
-                  </label>
-
-                  <label>
-                    <span className="text-xs font-semibold">
-                      Delivery address *
-                    </span>
-
-                    <input
-                      type="text"
-                      value={orderForm.address}
-                      onChange={(event) =>
-                        handleCustomerChange(
-                          "address",
-                          event.target.value
-                        )
-                      }
-                      placeholder="Street / house / area"
-                      className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-[#b85c78]"
-                    />
-                  </label>
+                  </div>
                 </div>
 
-                <label>
-                  <span className="text-xs font-semibold">
+                <div>
+                  <label
+                    htmlFor="address"
+                    className="text-sm font-semibold"
+                  >
+                    Delivery address *
+                  </label>
+
+                  <div className="relative mt-2">
+                    <MapPin
+                      size={17}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30"
+                    />
+
+                    <input
+                      id="address"
+                      type="text"
+                      value={address}
+                      onChange={(event) =>
+                        setAddress(event.target.value)
+                      }
+                      placeholder="Your delivery address"
+                      className="w-full rounded-2xl border border-black/10 bg-[#faf8f7] py-3.5 pl-11 pr-4 text-sm outline-none transition focus:border-[#b85c78]"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label
+                    htmlFor="notes"
+                    className="text-sm font-semibold"
+                  >
                     Additional notes
-                  </span>
+                  </label>
 
                   <textarea
-                    value={orderForm.notes}
-                    onChange={(event) =>
-                      handleCustomerChange(
-                        "notes",
-                        event.target.value
-                      )
-                    }
-                    placeholder="Any special request, fabric preference, sleeve style, colour, etc."
+                    id="notes"
+                    value={notes}
+                    onChange={(event) => setNotes(event.target.value)}
+                    placeholder="Any special request, fabric preference, sleeve style, neckline, etc."
                     rows={5}
-                    className="mt-2 w-full resize-none rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-[#b85c78]"
+                    className="mt-2 w-full resize-none rounded-2xl border border-black/10 bg-[#faf8f7] px-4 py-3.5 text-sm outline-none transition focus:border-[#b85c78]"
                   />
-                </label>
+                </div>
+              </div>
 
-                {errorMessage && (
-                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {errorMessage}
+              {/* FINAL PRICE SUMMARY */}
+              <div className="mt-8 rounded-[2rem] bg-[#211b1d] p-6 text-white">
+                <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-white/40">
+                      Your estimate
+                    </p>
+
+                    <p className="mt-2 text-2xl font-semibold">
+                      {formatLKR(estimatedTotal.min)} -{" "}
+                      {formatLKR(estimatedTotal.max)}
+                    </p>
+
+                    <p className="mt-2 max-w-xl text-xs leading-5 text-white/45">
+                      This is an estimate only. We will contact you through
+                      WhatsApp with the exact price and further information.
+                    </p>
                   </div>
-                )}
 
+                  <button
+                    type="submit"
+                    disabled={!canSubmit}
+                    className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-[#211b1d] transition hover:bg-[#f0c5d1] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Place order request
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-start">
                 <button
-                  type="submit"
-                  className="w-full rounded-full bg-[#211b1d] px-6 py-4 text-sm font-semibold text-white transition hover:bg-[#b85c78]"
+                  type="button"
+                  onClick={previousStep}
+                  className="flex items-center gap-2 rounded-full border border-black/10 px-5 py-3.5 text-sm font-medium"
                 >
-                  Request custom order
+                  <ArrowLeft size={16} />
+                  Back
                 </button>
-              </form>
-            </section>
-          </div>
+              </div>
+            </form>
+          )}
 
-          {/* RIGHT SIDE ESTIMATE */}
-          <aside className="lg:sticky lg:top-6 lg:h-fit">
-            <div className="rounded-[2rem] bg-[#211b1d] p-6 text-white shadow-xl sm:p-7">
-              <p className="text-xs uppercase tracking-[0.2em] text-white/40">
-                Approximate estimate
+          {/* SUCCESS */}
+          {step === 5 && orderSent && (
+            <div className="p-8 text-center sm:p-14">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#e9f7ee] text-[#2e8b57]">
+                <Check size={30} />
+              </div>
+
+              <p className="mt-7 text-xs font-semibold uppercase tracking-[0.25em] text-[#b85c78]">
+                Order request ready
               </p>
 
-              <h2 className="mt-3 text-3xl font-semibold">
-                {formatLKR(estimatedPrice - 1000)}
-                <span className="mx-2 text-white/30">–</span>
-                {formatLKR(estimatedPrice + 1500)}
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+                Thank you, {customerName}.
               </h2>
 
-              <p className="mt-4 text-xs leading-5 text-white/50">
-                Estimated in Sri Lankan Rupees. This is not the final price.
+              <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-black/50">
+                Your custom tailoring information has been prepared. Please
+                contact us through WhatsApp so we can check your reference,
+                measurements, material and delivery details.
               </p>
 
-              <div className="mt-7 space-y-4 border-t border-white/10 pt-6">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-white/55">
-                    Garment
-                  </span>
-
-                  <span>
-                    {
-                      dressTypes.find(
-                        (item) => item.value === dressType
-                      )?.label
-                    }
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-white/55">
-                    Measurements
-                  </span>
-
-                  <span>
-                    {completedMeasurements}/
-                    {currentMeasurements.length}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-white/55">
-                    Front reference
-                  </span>
-
-                  <span>
-                    {frontImage ? "Added" : "Required"}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-white/55">
-                    Back reference
-                  </span>
-
-                  <span>
-                    {backImage ? "Added" : "Required"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-7 rounded-2xl bg-white/[0.07] p-4">
-                <p className="text-xs font-semibold">
-                  What's included in the estimate?
+              <div className="mx-auto mt-8 max-w-xl rounded-3xl bg-[#f8e8ed] p-6 text-left">
+                <p className="text-sm font-semibold">
+                  Estimated price
                 </p>
 
-                <p className="mt-2 text-xs leading-5 text-white/45">
-                  The estimate considers expected material cost, tailoring
-                  work, delivery and the cost involved in sourcing suitable
-                  materials.
+                <p className="mt-2 text-2xl font-semibold text-[#b85c78]">
+                  {formatLKR(estimatedTotal.min)} -{" "}
+                  {formatLKR(estimatedTotal.max)}
+                </p>
+
+                <p className="mt-3 text-xs leading-5 text-black/50">
+                  This is not the final price. The exact price and any
+                  additional requirements will be confirmed through WhatsApp.
                 </p>
               </div>
 
-              <div className="mt-5 rounded-2xl bg-[#b85c78] p-4">
-                <p className="text-xs font-semibold">
-                  Final price
+              <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={openWhatsApp}
+                  className="flex items-center justify-center gap-2 rounded-full bg-[#211b1d] px-7 py-4 text-sm font-semibold text-white transition hover:bg-[#b85c78]"
+                >
+                  <MessageCircle size={18} />
+                  Contact us on WhatsApp
+                </button>
+
+                <Link
+                  href="/"
+                  className="flex items-center justify-center gap-2 rounded-full border border-black/10 px-7 py-4 text-sm font-medium"
+                >
+                  Back to website
+                </Link>
+              </div>
+
+              <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-black/[0.06] bg-[#faf8f7] p-5 text-left">
+                <p className="text-sm font-semibold">
+                  What happens next?
                 </p>
 
-                <p className="mt-2 text-xs leading-5 text-white/80">
-                  We will confirm the exact material, design and final price
-                  with you through WhatsApp before production.
-                </p>
+                <div className="mt-4 space-y-3">
+                  <div className="flex gap-3">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#211b1d] text-[10px] text-white">
+                      1
+                    </div>
+
+                    <p className="text-xs leading-5 text-black/50">
+                      We review your front and back reference images and
+                      measurements.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#211b1d] text-[10px] text-white">
+                      2
+                    </div>
+
+                    <p className="text-xs leading-5 text-black/50">
+                      We contact you through WhatsApp for any questions.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#211b1d] text-[10px] text-white">
+                      3
+                    </div>
+
+                    <p className="text-xs leading-5 text-black/50">
+                      We provide the exact price and other important
+                      information.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#211b1d] text-[10px] text-white">
+                      4
+                    </div>
+
+                    <p className="text-xs leading-5 text-black/50">
+                      Once everything is confirmed, we proceed with your
+                      custom order.
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {/* ORDER CHECKLIST */}
-            <div className="mt-5 rounded-[2rem] border border-black/10 bg-white p-6">
-              <h3 className="font-semibold">
-                Before submitting
-              </h3>
-
-              <div className="mt-5 space-y-3">
-                <ChecklistItem
-                  done={Boolean(frontImage)}
-                  text="Front reference image"
-                />
-
-                <ChecklistItem
-                  done={Boolean(backImage)}
-                  text="Back reference image"
-                />
-
-                <ChecklistItem
-                  done={
-                    completedMeasurements ===
-                    currentMeasurements.length
-                  }
-                  text="Required measurements"
-                />
-
-                <ChecklistItem
-                  done={Boolean(orderForm.name.trim())}
-                  text="Customer name"
-                />
-
-                <ChecklistItem
-                  done={Boolean(orderForm.whatsapp.trim())}
-                  text="WhatsApp number"
-                />
-
-                <ChecklistItem
-                  done={
-                    Boolean(orderForm.address.trim()) &&
-                    Boolean(orderForm.city.trim())
-                  }
-                  text="Delivery details"
-                />
-              </div>
-            </div>
-
-            <div className="mt-5 rounded-[2rem] bg-[#f5eeec] p-6">
-              <p className="text-sm font-semibold">
-                Need help with measurements?
-              </p>
-
-              <p className="mt-2 text-xs leading-5 text-black/45">
-                Select any measurement above to see an explanation of where
-                and how to measure it.
+              <p className="mt-8 text-xs text-black/35">
+                Thanks for choosing Atelier AI. We will provide you with
+                the exact price and further information through WhatsApp.
               </p>
             </div>
-          </aside>
+          )}
         </div>
       </section>
     </main>
-  );
-}
-
-function ChecklistItem({
-  done,
-  text,
-}: {
-  done: boolean;
-  text: string;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <div
-        className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
-          done
-            ? "bg-[#b85c78] text-white"
-            : "bg-black/[0.05] text-black/30"
-        }`}
-      >
-        {done ? "✓" : "•"}
-      </div>
-
-      <span
-        className={`text-sm ${
-          done ? "text-black/70" : "text-black/40"
-        }`}
-      >
-        {text}
-      </span>
-    </div>
   );
 }
