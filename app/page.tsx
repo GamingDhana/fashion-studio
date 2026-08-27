@@ -98,6 +98,7 @@ export default function HomePage() {
             </div>
           </Link>
 
+          {/* DESKTOP NAVIGATION */}
           <nav className="hidden items-center gap-8 md:flex">
             <Link
               href="/"
@@ -114,6 +115,13 @@ export default function HomePage() {
             </Link>
 
             <Link
+              href="/tailor"
+              className="text-sm font-medium transition hover:text-[#b85c78]"
+            >
+              Tailor
+            </Link>
+
+            <Link
               href="/shop"
               className="text-sm font-medium transition hover:text-[#b85c78]"
             >
@@ -121,6 +129,7 @@ export default function HomePage() {
             </Link>
           </nav>
 
+          {/* HEADER BUTTONS */}
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -129,6 +138,13 @@ export default function HomePage() {
             >
               <Heart size={17} />
             </button>
+
+            <Link
+              href="/tailor"
+              className="hidden items-center gap-2 rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-medium transition hover:border-[#b85c78] hover:bg-[#f8e8ed] hover:text-[#8f425d] lg:flex"
+            >
+              Tailor
+            </Link>
 
             <Link
               href="/ai-studio"
@@ -177,10 +193,10 @@ export default function HomePage() {
               </Link>
 
               <Link
-                href="/shop"
-                className="flex items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-7 py-4 text-sm font-medium transition hover:border-black/20 hover:bg-black/[0.03]"
+                href="/tailor"
+                className="flex items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-7 py-4 text-sm font-medium transition hover:border-[#b85c78] hover:bg-[#f8e8ed] hover:text-[#8f425d]"
               >
-                Explore collection
+                Custom Tailoring
                 <ChevronRight size={16} />
               </Link>
             </div>
@@ -265,7 +281,7 @@ export default function HomePage() {
             ].map((item) => (
               <Link
                 key={item}
-                href="/shop"
+                href={item === "Custom" ? "/tailor" : "/shop"}
                 className="whitespace-nowrap rounded-full border border-black/10 px-5 py-2.5 text-xs font-medium transition hover:border-[#b85c78] hover:bg-[#f8e8ed] hover:text-[#8f425d]"
               >
                 {item}
@@ -296,13 +312,23 @@ export default function HomePage() {
                 sleeves, neckline, fabric and details.
               </p>
 
-              <Link
-                href="/ai-studio"
-                className="mt-8 inline-flex items-center gap-3 rounded-full bg-white px-6 py-4 text-sm font-medium text-[#211b1d] transition hover:-translate-y-1 hover:bg-[#f8e8ed]"
-              >
-                Open AI Studio
-                <ArrowRight size={17} />
-              </Link>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/ai-studio"
+                  className="mt-8 inline-flex items-center gap-3 rounded-full bg-white px-6 py-4 text-sm font-medium text-[#211b1d] transition hover:-translate-y-1 hover:bg-[#f8e8ed]"
+                >
+                  Open AI Studio
+                  <ArrowRight size={17} />
+                </Link>
+
+                <Link
+                  href="/tailor"
+                  className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/20 px-6 py-4 text-sm font-medium text-white transition hover:-translate-y-1 hover:bg-white/10"
+                >
+                  Custom Tailoring
+                  <ArrowRight size={17} />
+                </Link>
+              </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
@@ -527,13 +553,23 @@ export default function HomePage() {
                 ))}
               </div>
 
-              <Link
-                href="/ai-studio"
-                className="mt-8 inline-flex items-center gap-3 rounded-full bg-[#211b1d] px-6 py-3.5 text-sm font-medium text-white transition hover:bg-[#b85c78]"
-              >
-                Try reference design
-                <ArrowRight size={16} />
-              </Link>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/ai-studio"
+                  className="mt-8 inline-flex items-center gap-3 rounded-full bg-[#211b1d] px-6 py-3.5 text-sm font-medium text-white transition hover:bg-[#b85c78]"
+                >
+                  Try reference design
+                  <ArrowRight size={16} />
+                </Link>
+
+                <Link
+                  href="/tailor"
+                  className="mt-8 inline-flex items-center gap-3 rounded-full border border-black/10 bg-white px-6 py-3.5 text-sm font-medium transition hover:border-[#b85c78] hover:text-[#b85c78]"
+                >
+                  Tailor a dress
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -565,14 +601,24 @@ export default function HomePage() {
                 to wear. Your AI fashion studio is ready.
               </p>
 
-              <Link
-                href="/ai-studio"
-                className="mt-8 inline-flex items-center gap-3 rounded-full bg-white px-7 py-4 text-sm font-semibold text-[#211b1d] transition hover:-translate-y-1 hover:bg-[#f0c5d1]"
-              >
-                <WandSparkles size={17} />
-                Create my outfit
-                <ArrowRight size={16} />
-              </Link>
+              <div className="flex flex-wrap justify-center gap-3">
+                <Link
+                  href="/ai-studio"
+                  className="mt-8 inline-flex items-center gap-3 rounded-full bg-white px-7 py-4 text-sm font-semibold text-[#211b1d] transition hover:-translate-y-1 hover:bg-[#f0c5d1]"
+                >
+                  <WandSparkles size={17} />
+                  Create my outfit
+                  <ArrowRight size={16} />
+                </Link>
+
+                <Link
+                  href="/tailor"
+                  className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/20 px-7 py-4 text-sm font-semibold text-white transition hover:-translate-y-1 hover:bg-white/10"
+                >
+                  Custom Tailoring
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -618,6 +664,13 @@ export default function HomePage() {
                 </Link>
 
                 <Link
+                  href="/tailor"
+                  className="block text-sm text-black/60 transition hover:text-black"
+                >
+                  Tailor
+                </Link>
+
+                <Link
                   href="/shop"
                   className="block text-sm text-black/60 transition hover:text-black"
                 >
@@ -640,6 +693,13 @@ export default function HomePage() {
                 </Link>
 
                 <Link
+                  href="/tailor"
+                  className="block text-sm text-black/60 transition hover:text-black"
+                >
+                  Custom Tailoring
+                </Link>
+
+                <Link
                   href="/ai-studio"
                   className="block text-sm text-black/60 transition hover:text-black"
                 >
@@ -658,6 +718,7 @@ export default function HomePage() {
 
           <div className="mt-12 flex flex-col justify-between gap-3 border-t border-black/[0.06] pt-6 text-xs text-black/35 sm:flex-row">
             <p>© 2026 Atelier AI. All rights reserved.</p>
+
             <p>Designed with AI ✦</p>
           </div>
         </div>
