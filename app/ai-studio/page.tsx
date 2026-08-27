@@ -265,12 +265,16 @@ export default function AIStudio() {
         if (typeof reader.result === "string") {
           resolve(reader.result);
         } else {
-          reject(new Error("Unable to read image."));
+          reject(
+            new Error("Unable to read image.")
+          );
         }
       };
 
       reader.onerror = () => {
-        reject(new Error("Unable to read image."));
+        reject(
+          new Error("Unable to read image.")
+        );
       };
 
       reader.readAsDataURL(file);
@@ -281,7 +285,9 @@ export default function AIStudio() {
      DETECT GARMENT TYPE
   ========================================================== */
 
-  function detectGarmentType(text: string): GarmentType {
+  function detectGarmentType(
+    text: string
+  ): GarmentType {
     const lower = text.toLowerCase();
 
     if (
@@ -355,14 +361,19 @@ export default function AIStudio() {
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setError("Please upload an image smaller than 10MB.");
+      setError(
+        "Please upload an image smaller than 10MB."
+      );
       return;
     }
 
     try {
-      setLoadingText("Preparing your reference...");
+      setLoadingText(
+        "Preparing your reference..."
+      );
 
-      const dataURL = await readFileAsDataURL(file);
+      const dataURL =
+        await readFileAsDataURL(file);
 
       setReferenceImage(dataURL);
       setReferenceFileName(file.name);
@@ -395,8 +406,11 @@ export default function AIStudio() {
      ANALYZE REFERENCE
   ========================================================== */
 
-  async function analyzeReference(imageData?: string) {
-    const source = imageData || referenceImage;
+  async function analyzeReference(
+    imageData?: string
+  ) {
+    const source =
+      imageData || referenceImage;
 
     if (!source) return;
 
@@ -405,7 +419,9 @@ export default function AIStudio() {
       setAnalysisComplete(false);
       setError("");
 
-      setLoadingText("AI is identifying your garment...");
+      setLoadingText(
+        "AI is identifying your garment..."
+      );
 
       const result = await ai.chat(
         `
@@ -497,14 +513,20 @@ primary visual identity.
       const text = getAIText(result);
 
       if (!text) {
-        throw new Error("AI returned an empty analysis.");
+        throw new Error(
+          "AI returned an empty analysis."
+        );
       }
 
-      const detected = detectGarmentType(text);
+      const detected =
+        detectGarmentType(text);
 
       setGarmentType(detected);
 
-      const detectedNames: Record<GarmentType, string> = {
+      const detectedNames: Record<
+        GarmentType,
+        string
+      > = {
         dress: "Dress",
         shirt: "Shirt",
         blouse: "Blouse",
@@ -513,11 +535,14 @@ primary visual identity.
         jacket: "Jacket",
         coat: "Coat",
         jumpsuit: "Jumpsuit",
-        traditional: "Traditional Outfit",
+        traditional:
+          "Traditional Outfit",
         unknown: "Garment",
       };
 
-      setGarmentName(detectedNames[detected]);
+      setGarmentName(
+        detectedNames[detected]
+      );
 
       setReferenceAnalysis(text);
       setAnalysisComplete(true);
@@ -526,7 +551,10 @@ primary visual identity.
         `${detectedNames[detected]} identified`
       );
     } catch (err) {
-      console.error("REFERENCE ANALYSIS ERROR:", err);
+      console.error(
+        "REFERENCE ANALYSIS ERROR:",
+        err
+      );
 
       setError(
         err instanceof Error
@@ -594,7 +622,10 @@ ${referenceAnalysis}
 
 USER IDEA:
 
-${userPrompt || "Use the reference garment exactly as the main design."}
+${
+  userPrompt ||
+  "No additional prompt. Use the reference garment exactly as the main design."
+}
 
 CUSTOMIZATION:
 
@@ -628,6 +659,10 @@ Only modify explicitly requested parts.
 
 For every option saying "Keep Reference",
 preserve the original reference.
+
+If the user provides no prompt,
+the reference image itself is the complete
+design instruction.
 
 Return:
 
@@ -665,9 +700,12 @@ Return:
      CREATE DESIGN IMAGE
   ========================================================== */
 
-  async function createDesignImage(prompt: string) {
+  async function createDesignImage(
+    prompt: string
+  ) {
     const options: ImageOptions = {
-      provider: "openai-image-generation",
+      provider:
+        "openai-image-generation",
       model: "gpt-image-1",
       quality: "high",
       ratio: {
@@ -677,15 +715,23 @@ Return:
     };
 
     if (referenceImage) {
-      options.input_images = [referenceImage];
+      options.input_images = [
+        referenceImage,
+      ];
     }
 
-    const result = await ai.txt2img(prompt, options);
+    const result = await ai.txt2img(
+      prompt,
+      options
+    );
 
-    const generated = getAIImage(result);
+    const generated =
+      getAIImage(result);
 
     if (!generated) {
-      throw new Error("AI did not return a design image.");
+      throw new Error(
+        "AI did not return a design image."
+      );
     }
 
     return generated;
@@ -698,7 +744,7 @@ Return:
   async function generateDesign() {
     if (!referenceImage) {
       setError(
-        "Upload and analyze a reference image first."
+        "Upload a reference image first."
       );
       return;
     }
@@ -718,35 +764,46 @@ Return:
       setDesignImage("");
       setMockup("");
 
-      setLoadingText("Creating your design...");
+      setLoadingText(
+        "Creating your design..."
+      );
 
       const userPrompt =
         idea.trim() ||
-        "Use the reference garment as the design. Preserve the garment and create a refined professional version.";
+        "REFERENCE ONLY MODE: Use the uploaded reference garment as the complete design instruction. Preserve the garment exactly and create a refined professional version without introducing unrelated changes.";
 
       const designText =
-        await createDesignDescription(userPrompt);
+        await createDesignDescription(
+          userPrompt
+        );
 
       setDesign(designText);
 
-      setLoadingText("Creating the visual design...");
+      setLoadingText(
+        "Creating the visual design..."
+      );
 
       const imagePrompt = `
 Create a professional fashion design image.
 
 PRIMARY VISUAL REFERENCE:
+
 The supplied reference image.
 
 REFERENCE GARMENT BLUEPRINT:
+
 ${referenceAnalysis}
 
 USER REQUEST:
+
 ${userPrompt}
 
 DESIGN DESCRIPTION:
+
 ${designText}
 
 GARMENT TYPE:
+
 ${garmentName}
 
 CUSTOMIZATION:
@@ -780,33 +837,32 @@ IMPORTANT:
 The supplied reference image is the PRIMARY
 visual source.
 
-Preserve the SAME garment.
+If the user did not provide a prompt,
+this is REFERENCE ONLY MODE.
 
-Do not randomly redesign it.
+In reference-only mode:
+
+- reproduce the same garment
+- preserve the silhouette
+- preserve proportions
+- preserve construction
+- preserve neckline
+- preserve collar
+- preserve sleeves
+- preserve fabric appearance
+- preserve color
+- preserve pattern
+- preserve length
+- preserve fit
+- preserve visible details
+
+Do not invent a new garment.
+
+Only change something when the user
+explicitly requests that change.
 
 "Keep Reference" means preserve that part
-exactly as shown in the reference.
-
-Only change explicitly requested parts.
-
-Preserve:
-
-- silhouette
-- proportions
-- garment construction
-- neckline
-- collar
-- sleeves
-- sleeve construction
-- fabric appearance
-- color
-- pattern
-- length
-- fit
-- seams
-- pockets
-- buttons
-- decorative details
+as shown in the reference.
 
 Create a clean professional fashion
 presentation.
@@ -829,13 +885,20 @@ No unnecessary accessories.
 `;
 
       const generated =
-        await createDesignImage(imagePrompt);
+        await createDesignImage(
+          imagePrompt
+        );
 
       setDesignImage(generated);
 
-      setLoadingText("Design ready.");
+      setLoadingText(
+        "Design ready."
+      );
     } catch (err) {
-      console.error("DESIGN ERROR:", err);
+      console.error(
+        "DESIGN ERROR:",
+        err
+      );
 
       setError(
         err instanceof Error
@@ -854,7 +917,9 @@ No unnecessary accessories.
 
   async function finalizeMockup() {
     if (!referenceImage) {
-      setError("Reference image is required.");
+      setError(
+        "Reference image is required."
+      );
       return;
     }
 
@@ -875,7 +940,9 @@ No unnecessary accessories.
       );
 
       if (!referenceAnalysis) {
-        await analyzeReference(referenceImage);
+        await analyzeReference(
+          referenceImage
+        );
       }
 
       setLoadingText(
@@ -891,21 +958,30 @@ This is a realistic model photograph
 of the APPROVED GARMENT.
 
 PRIMARY REFERENCE:
+
 The original uploaded reference image.
 
 SECONDARY REFERENCE:
+
 The approved AI design image.
 
 REFERENCE BLUEPRINT:
+
 ${referenceAnalysis}
 
 APPROVED DESIGN:
+
 ${design}
 
 CUSTOMER IDEA:
-${idea || "Preserve the reference garment."}
+
+${
+  idea ||
+  "No additional prompt. Use the reference garment."
+}
 
 GARMENT:
+
 ${garmentName}
 
 CRITICAL RULE:
@@ -999,7 +1075,8 @@ photographed on a real fashion model.
       );
 
       const options: ImageOptions = {
-        provider: "openai-image-generation",
+        provider:
+          "openai-image-generation",
         model: "gpt-image-1",
         quality: "high",
         ratio: {
@@ -1013,9 +1090,13 @@ photographed on a real fashion model.
       };
 
       const result =
-        await ai.txt2img(finalPrompt, options);
+        await ai.txt2img(
+          finalPrompt,
+          options
+        );
 
-      const finalImage = getAIImage(result);
+      const finalImage =
+        getAIImage(result);
 
       if (!finalImage) {
         throw new Error(
@@ -1025,9 +1106,14 @@ photographed on a real fashion model.
 
       setMockup(finalImage);
 
-      setLoadingText("Final mockup complete.");
+      setLoadingText(
+        "Final mockup complete."
+      );
     } catch (err) {
-      console.error("MOCKUP ERROR:", err);
+      console.error(
+        "MOCKUP ERROR:",
+        err
+      );
 
       setError(
         err instanceof Error
@@ -1048,7 +1134,8 @@ photographed on a real fashion model.
     src: string,
     filename: string
   ) {
-    const link = document.createElement("a");
+    const link =
+      document.createElement("a");
 
     link.href = src;
     link.download = filename;
@@ -1128,6 +1215,7 @@ photographed on a real fashion model.
           <span className="text-black/55">
             {icon}
           </span>
+
           {label}
         </label>
 
@@ -1135,23 +1223,27 @@ photographed on a real fashion model.
           <select
             value={value}
             onChange={(e) =>
-              onChange(e.target.value)
+              onChange(
+                e.target.value
+              )
             }
             className="w-full appearance-none rounded-2xl border border-black/[0.09] bg-[#faf9f6] px-4 py-3.5 pr-11 text-sm font-medium outline-none transition-all hover:border-black/20 focus:border-black/30 focus:bg-white focus:ring-4 focus:ring-black/[0.035]"
           >
-            {options.map((option) => (
-              <option
-                key={option}
-                value={option}
-              >
-                {option}
-              </option>
-            ))}
+            {options.map(
+              (option) => (
+                <option
+                  key={option}
+                  value={option}
+                >
+                  {option}
+                </option>
+              )
+            )}
           </select>
 
           <ChevronDown
             size={16}
-            className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-black/35 transition-transform"
+            className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-black/35"
           />
         </div>
       </div>
@@ -1240,13 +1332,18 @@ photographed on a real fashion model.
           <h1 className="mt-6 text-[42px] font-semibold leading-[0.98] tracking-[-0.055em] sm:text-6xl lg:text-[76px]">
             Turn your reference
             <br />
-            into a <span className="text-black/40">real design.</span>
+            into a{" "}
+            <span className="text-black/40">
+              real design.
+            </span>
           </h1>
 
           <p className="mt-6 max-w-2xl text-sm leading-7 text-black/50 sm:text-base lg:text-lg">
-            Upload a garment reference, let AI understand
-            every detail, customize only what you want,
-            and finish with a realistic fashion mockup.
+            Upload a garment reference,
+            let AI understand every detail,
+            optionally describe what you want,
+            and finish with a realistic
+            fashion mockup.
           </p>
 
           {/* STEPS */}
@@ -1258,27 +1355,33 @@ photographed on a real fashion model.
               ["02", "Analyze"],
               ["03", "Customize"],
               ["04", "Mockup"],
-            ].map(([number, label], index) => {
-              const active = currentStep >= index;
+            ].map(
+              ([number, label], index) => {
+                const active =
+                  currentStep >= index;
 
-              return (
-                <div
-                  key={number}
-                  className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all ${
-                    active
-                      ? "bg-black text-white shadow-md shadow-black/10"
-                      : "bg-white text-black/35"
-                  }`}
-                >
-                  {active ? (
-                    <Check size={11} />
-                  ) : (
-                    <span>{number}</span>
-                  )}
-                  {label}
-                </div>
-              );
-            })}
+                return (
+                  <div
+                    key={number}
+                    className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all ${
+                      active
+                        ? "bg-black text-white shadow-md shadow-black/10"
+                        : "bg-white text-black/35"
+                    }`}
+                  >
+                    {active ? (
+                      <Check size={11} />
+                    ) : (
+                      <span>
+                        {number}
+                      </span>
+                    )}
+
+                    {label}
+                  </div>
+                );
+              }
+            )}
 
           </div>
 
@@ -1291,10 +1394,18 @@ photographed on a real fashion model.
 
       {error && (
         <div className="mx-auto max-w-[1500px] px-5 sm:px-6 lg:px-10">
+
           <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 shadow-sm">
-            <X size={17} className="mt-0.5 shrink-0" />
+
+            <X
+              size={17}
+              className="mt-0.5 shrink-0"
+            />
+
             <span>{error}</span>
+
           </div>
+
         </div>
       )}
 
@@ -1368,7 +1479,9 @@ photographed on a real fashion model.
 
                   <button
                     type="button"
-                    onClick={removeReference}
+                    onClick={
+                      removeReference
+                    }
                     className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black text-white shadow-lg transition-all hover:scale-105 hover:bg-black/80"
                     aria-label="Remove reference"
                   >
@@ -1397,7 +1510,9 @@ photographed on a real fashion model.
                     ref={fileInputRef}
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
-                    onChange={handleReferenceUpload}
+                    onChange={
+                      handleReferenceUpload
+                    }
                     className="hidden"
                   />
 
@@ -1429,6 +1544,7 @@ photographed on a real fashion model.
 
                   </button>
                 </>
+
               )}
 
             </div>
@@ -1447,12 +1563,13 @@ photographed on a real fashion model.
                 <div className="flex items-center gap-3">
 
                   <div
-                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-all ${
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
                       analysisComplete
                         ? "bg-black text-white shadow-lg shadow-black/10"
                         : "bg-[#f2eee7]"
                     }`}
                   >
+
                     {analyzingReference ? (
                       <Loader2
                         size={18}
@@ -1463,6 +1580,7 @@ photographed on a real fashion model.
                     ) : (
                       <ScanSearch size={18} />
                     )}
+
                   </div>
 
                   <div className="min-w-0 flex-1">
@@ -1506,7 +1624,8 @@ photographed on a real fashion model.
                     <div className="mt-2 flex items-center justify-between gap-3">
 
                       <p className="text-lg font-bold">
-                        {garmentName || "Garment"}
+                        {garmentName ||
+                          "Garment"}
                       </p>
 
                       <span className="rounded-full bg-white px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider shadow-sm">
@@ -1523,6 +1642,7 @@ photographed on a real fashion model.
                     <details className="group mt-4">
 
                       <summary className="flex cursor-pointer list-none items-center justify-between rounded-2xl border border-black/[0.05] bg-[#faf9f6] px-4 py-3.5 text-xs font-semibold">
+
                         <span className="flex items-center gap-2">
                           <Layers3 size={14} />
                           View garment blueprint
@@ -1532,12 +1652,15 @@ photographed on a real fashion model.
                           size={15}
                           className="transition group-open:rotate-180"
                         />
+
                       </summary>
 
                       <div className="mt-2 max-h-64 overflow-y-auto rounded-2xl bg-[#faf9f6] p-4">
+
                         <p className="whitespace-pre-wrap text-[11px] leading-6 text-black/55">
                           {referenceAnalysis}
                         </p>
+
                       </div>
 
                     </details>
@@ -1549,7 +1672,9 @@ photographed on a real fashion model.
                     onClick={() =>
                       analyzeReference()
                     }
-                    disabled={analyzingReference}
+                    disabled={
+                      analyzingReference
+                    }
                     className="mt-4 flex items-center gap-2 text-[11px] font-bold text-black/45 transition hover:text-black disabled:opacity-40"
                   >
                     <RefreshCw size={12} />
@@ -1563,57 +1688,128 @@ photographed on a real fashion model.
           )}
 
           {/* ==================================================
-              IDEA
+              OPTIONAL PROMPT
           ================================================== */}
 
           {analysisComplete && (
             <section className="rounded-[28px] border border-black/[0.07] bg-white p-5 shadow-[0_18px_60px_rgba(0,0,0,0.035)] sm:p-6">
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-start gap-3">
 
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black text-white">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-black text-white">
                   <WandSparkles size={16} />
                 </div>
 
-                <div>
-                  <h2 className="text-sm font-bold">
-                    Your idea
-                  </h2>
+                <div className="min-w-0 flex-1">
 
-                  <p className="mt-1 text-[11px] text-black/40">
-                    Tell AI what you want to change
+                  <div className="flex flex-wrap items-center gap-2">
+
+                    <h2 className="text-sm font-bold">
+                      Describe your design
+                    </h2>
+
+                    <span className="rounded-full bg-[#f3f0ea] px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-black/45">
+                      Optional
+                    </span>
+
+                  </div>
+
+                  <p className="mt-1 text-[11px] leading-5 text-black/40">
+                    Type what you want to change,
+                    or leave this empty to generate
+                    using the reference.
                   </p>
+
                 </div>
 
               </div>
 
-              <textarea
-                value={idea}
-                onChange={(e) =>
-                  setIdea(e.target.value)
-                }
-                placeholder="Example: Keep this exact dress but make it dark blue denim..."
-                className="mt-5 min-h-[125px] w-full resize-none rounded-2xl border border-black/[0.09] bg-[#faf9f6] p-4 text-sm leading-6 outline-none transition-all placeholder:text-black/25 focus:border-black/25 focus:bg-white focus:ring-4 focus:ring-black/[0.035]"
-              />
+              {/* PROMPT INPUT */}
 
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="relative mt-5">
 
-                {suggestions.map(
-                  (suggestion) => (
-                    <button
-                      key={suggestion}
-                      type="button"
-                      onClick={() =>
-                        setIdea(suggestion)
-                      }
-                      className="rounded-full border border-black/[0.09] bg-white px-3 py-2 text-[9px] font-semibold text-black/50 transition-all hover:border-black hover:bg-black hover:text-white"
-                    >
-                      {suggestion}
-                    </button>
-                  )
+                <textarea
+                  value={idea}
+                  onChange={(e) =>
+                    setIdea(e.target.value)
+                  }
+                  placeholder="Optional: e.g. Keep this exact dress but change the color to dark blue..."
+                  className="min-h-[140px] w-full resize-none rounded-2xl border border-black/[0.09] bg-[#faf9f6] p-4 pr-12 text-sm leading-6 outline-none transition-all placeholder:text-black/25 focus:border-black/25 focus:bg-white focus:ring-4 focus:ring-black/[0.035]"
+                />
+
+                {idea.trim() && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setIdea("")
+                    }
+                    className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-black/40 shadow-sm transition hover:bg-black hover:text-white"
+                    aria-label="Clear prompt"
+                  >
+                    <X size={14} />
+                  </button>
                 )}
 
               </div>
+
+              {/* QUICK PROMPTS */}
+
+              <div className="mt-4">
+
+                <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.16em] text-black/30">
+                  Quick ideas
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+
+                  {suggestions.map(
+                    (suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() =>
+                          setIdea(
+                            suggestion
+                          )
+                        }
+                        className="rounded-full border border-black/[0.09] bg-white px-3 py-2 text-[9px] font-semibold text-black/50 transition-all hover:border-black hover:bg-black hover:text-white"
+                      >
+                        {suggestion}
+                      </button>
+                    )
+                  )}
+
+                </div>
+
+              </div>
+
+              {/* REFERENCE ONLY MESSAGE */}
+
+              {!idea.trim() && (
+                <div className="mt-5 flex items-start gap-3 rounded-2xl border border-black/[0.06] bg-[#faf9f6] p-4">
+
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white">
+                    <ImageIcon size={14} />
+                  </div>
+
+                  <div>
+
+                    <p className="text-xs font-bold">
+                      Reference-only mode
+                    </p>
+
+                    <p className="mt-1 text-[10px] leading-5 text-black/40">
+                      No prompt is required.
+                      AI will use your uploaded
+                      reference as the primary
+                      design and preserve its
+                      visible details.
+                    </p>
+
+                  </div>
+
+                </div>
+              )}
 
             </section>
           )}
@@ -1635,14 +1831,17 @@ photographed on a real fashion model.
               <div className="flex items-center gap-3">
 
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black text-white">
+
                   {analysisComplete ? (
                     <Scissors size={16} />
                   ) : (
                     <Lock size={16} />
                   )}
+
                 </div>
 
                 <div>
+
                   <h2 className="text-sm font-bold">
                     Customize
                   </h2>
@@ -1652,6 +1851,7 @@ photographed on a real fashion model.
                       ? "Modify only the parts you want."
                       : "Upload and analyze a reference first."}
                   </p>
+
                 </div>
 
               </div>
@@ -1686,7 +1886,9 @@ photographed on a real fashion model.
                     label="Neckline"
                     value={neckline}
                     onChange={setNeckline}
-                    icon={<Ruler size={12} />}
+                    icon={
+                      <Ruler size={12} />
+                    }
                     options={[
                       "Keep Reference",
                       "Round",
@@ -1706,7 +1908,9 @@ photographed on a real fashion model.
                     label="Collar"
                     value={collar}
                     onChange={setCollar}
-                    icon={<Shirt size={12} />}
+                    icon={
+                      <Shirt size={12} />
+                    }
                     options={[
                       "Keep Reference",
                       "No Collar",
@@ -1724,7 +1928,9 @@ photographed on a real fashion model.
                     label="Sleeves"
                     value={sleeves}
                     onChange={setSleeves}
-                    icon={<Scissors size={12} />}
+                    icon={
+                      <Scissors size={12} />
+                    }
                     options={[
                       "Keep Reference",
                       "Sleeveless",
@@ -1744,7 +1950,9 @@ photographed on a real fashion model.
                   label="Fabric"
                   value={fabric}
                   onChange={setFabric}
-                  icon={<Palette size={12} />}
+                  icon={
+                    <Palette size={12} />
+                  }
                   options={[
                     "Keep Reference",
                     "Denim",
@@ -1763,7 +1971,9 @@ photographed on a real fashion model.
                   label="Color"
                   value={color}
                   onChange={setColor}
-                  icon={<Palette size={12} />}
+                  icon={
+                    <Palette size={12} />
+                  }
                   options={[
                     "Keep Reference",
                     "Black",
@@ -1783,7 +1993,9 @@ photographed on a real fashion model.
                     label="Length"
                     value={length}
                     onChange={setLength}
-                    icon={<Ruler size={12} />}
+                    icon={
+                      <Ruler size={12} />
+                    }
                     options={[
                       "Keep Reference",
                       "Mini",
@@ -1800,7 +2012,9 @@ photographed on a real fashion model.
                     label="Fit"
                     value={fit}
                     onChange={setFit}
-                    icon={<Ruler size={12} />}
+                    icon={
+                      <Ruler size={12} />
+                    }
                     options={[
                       "Keep Reference",
                       "Fitted",
@@ -1817,7 +2031,9 @@ photographed on a real fashion model.
                   label="Details"
                   value={details}
                   onChange={setDetails}
-                  icon={<Sparkles size={12} />}
+                  icon={
+                    <Sparkles size={12} />
+                  }
                   options={[
                     "Keep Reference",
                     "Keep all details",
@@ -1829,6 +2045,7 @@ photographed on a real fashion model.
                 />
 
               </div>
+
             )}
 
           </section>
@@ -1858,12 +2075,15 @@ photographed on a real fashion model.
 
             {designLoading
               ? "Creating Design..."
-              : "Create Design with AI"}
+              : idea.trim()
+              ? "Create Design with AI"
+              : "Generate from Reference"}
 
           </button>
 
           {loadingText && (
             <div className="flex items-center justify-center gap-2 text-center text-[10px] font-semibold text-black/40">
+
               {(designLoading ||
                 mockupLoading ||
                 analyzingReference) && (
@@ -1872,7 +2092,9 @@ photographed on a real fashion model.
                   className="animate-spin"
                 />
               )}
+
               {loadingText}
+
             </div>
           )}
 
@@ -1888,9 +2110,7 @@ photographed on a real fashion model.
 
             <div className="overflow-hidden rounded-[32px] border border-black/[0.07] bg-[#e9e5de] shadow-[0_25px_90px_rgba(0,0,0,0.055)]">
 
-              {/* =================================================
-                  WORKSPACE HEADER
-              ================================================= */}
+              {/* WORKSPACE HEADER */}
 
               <div className="flex items-center justify-between border-b border-black/[0.06] px-5 py-5 sm:px-7">
 
@@ -1933,17 +2153,13 @@ photographed on a real fashion model.
 
               </div>
 
-              {/* =================================================
-                  PREVIEW
-              ================================================= */}
+              {/* PREVIEW */}
 
               <div className="p-4 sm:p-7">
 
                 <div className="relative min-h-[620px] overflow-hidden rounded-[26px] bg-white shadow-inner sm:min-h-[680px]">
 
-                  {/* =================================================
-                      LOADING
-                  ================================================= */}
+                  {/* LOADING */}
 
                   {(designLoading ||
                     mockupLoading) && (
@@ -1969,13 +2185,15 @@ photographed on a real fashion model.
                         </h3>
 
                         <p className="mt-3 text-sm leading-6 text-black/40">
-                          AI is preserving the reference
-                          garment while creating your
-                          design.
+                          AI is preserving the
+                          reference garment while
+                          creating your design.
                         </p>
 
                         <div className="mx-auto mt-7 h-1.5 max-w-xs overflow-hidden rounded-full bg-black/[0.08]">
+
                           <div className="h-full w-1/2 animate-[pulse_1.5s_ease-in-out_infinite] rounded-full bg-black" />
+
                         </div>
 
                       </div>
@@ -1983,9 +2201,7 @@ photographed on a real fashion model.
                     </div>
                   )}
 
-                  {/* =================================================
-                      FINAL MOCKUP
-                  ================================================= */}
+                  {/* FINAL MOCKUP */}
 
                   {mockup ? (
 
@@ -1998,8 +2214,10 @@ photographed on a real fashion model.
                       />
 
                       <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-white/70 bg-white/90 px-4 py-2.5 text-[10px] font-bold shadow-sm backdrop-blur-xl">
+
                         <Check size={13} />
                         Final Mockup
+
                       </div>
 
                     </div>
@@ -2017,8 +2235,10 @@ photographed on a real fashion model.
                         />
 
                         <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-white/70 bg-white/90 px-4 py-2.5 text-[10px] font-bold shadow-sm backdrop-blur-xl">
+
                           <Check size={13} />
                           Design Ready
+
                         </div>
 
                       </div>
@@ -2040,8 +2260,10 @@ photographed on a real fashion model.
                           />
 
                           <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-[10px] font-bold shadow-sm backdrop-blur-xl">
+
                             <ImageIcon size={12} />
                             Your Reference
+
                           </div>
 
                         </div>
@@ -2060,7 +2282,7 @@ photographed on a real fashion model.
 
                           <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-black/40">
                             {analysisComplete
-                              ? "Your reference is ready. Customize it or create a design using the reference alone."
+                              ? "Your reference is ready. Add an optional prompt, customize it, or generate directly from the reference."
                               : "AI is studying the garment before unlocking customization."}
                           </p>
 
@@ -2093,10 +2315,10 @@ photographed on a real fashion model.
                         </h3>
 
                         <p className="mt-4 text-sm leading-7 text-black/40">
-                          Upload the garment you want to
-                          recreate. AI will analyze its
-                          structure before allowing you to
-                          customize it.
+                          Upload the garment you want
+                          to recreate. AI will analyze
+                          its structure before allowing
+                          you to customize it.
                         </p>
 
                         <button
@@ -2118,9 +2340,7 @@ photographed on a real fashion model.
 
                 </div>
 
-                {/* =================================================
-                    DESIGN DESCRIPTION
-                ================================================= */}
+                {/* DESIGN DESCRIPTION */}
 
                 {design && (
                   <div className="mt-6 rounded-2xl border border-black/[0.06] bg-white p-5 sm:p-6">
@@ -2132,6 +2352,7 @@ photographed on a real fashion model.
                       </div>
 
                       <div>
+
                         <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-black/30">
                           AI Design
                         </p>
@@ -2139,77 +2360,86 @@ photographed on a real fashion model.
                         <h3 className="mt-0.5 text-sm font-bold">
                           Design blueprint
                         </h3>
+
                       </div>
 
                     </div>
 
                     <div className="mt-4 max-h-56 overflow-y-auto rounded-2xl bg-[#faf9f6] p-4">
+
                       <p className="whitespace-pre-wrap text-xs leading-6 text-black/55">
                         {design}
                       </p>
+
                     </div>
 
                   </div>
                 )}
 
-                {/* =================================================
-                    FINALIZE
-                ================================================= */}
+                {/* FINALIZE */}
 
-                {designImage && !mockup && (
-                  <div className="mt-6 rounded-2xl border border-black/[0.08] bg-white p-5 sm:p-6">
+                {designImage &&
+                  !mockup && (
+                    <div className="mt-6 rounded-2xl border border-black/[0.08] bg-white p-5 sm:p-6">
 
-                    <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
 
-                      <div>
+                        <div>
 
-                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2">
 
-                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black text-white">
-                            <Check size={13} />
-                          </span>
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black text-white">
+                              <Check size={13} />
+                            </span>
 
-                          <p className="text-sm font-bold">
-                            Design approved
+                            <p className="text-sm font-bold">
+                              Design approved
+                            </p>
+
+                          </div>
+
+                          <p className="mt-2 max-w-xl text-xs leading-5 text-black/40">
+                            AI will use the original
+                            reference as the primary
+                            garment reference and place
+                            the approved design on a
+                            realistic model.
                           </p>
 
                         </div>
 
-                        <p className="mt-2 max-w-xl text-xs leading-5 text-black/40">
-                          AI will use the original reference
-                          as the primary garment reference
-                          and place the approved design on a
-                          realistic model.
-                        </p>
+                        <button
+                          type="button"
+                          onClick={
+                            finalizeMockup
+                          }
+                          disabled={
+                            mockupLoading
+                          }
+                          className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-black px-6 py-3.5 text-xs font-bold text-white transition-all hover:bg-black/80 disabled:opacity-40"
+                        >
+
+                          {mockupLoading ? (
+                            <Loader2
+                              size={15}
+                              className="animate-spin"
+                            />
+                          ) : (
+                            <Camera
+                              size={15}
+                            />
+                          )}
+
+                          Create Final Mockup
+
+                        </button>
 
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={finalizeMockup}
-                        disabled={mockupLoading}
-                        className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-black px-6 py-3.5 text-xs font-bold text-white transition-all hover:bg-black/80 disabled:opacity-40"
-                      >
-                        {mockupLoading ? (
-                          <Loader2
-                            size={15}
-                            className="animate-spin"
-                          />
-                        ) : (
-                          <Camera size={15} />
-                        )}
-
-                        Create Final Mockup
-                      </button>
-
                     </div>
+                  )}
 
-                  </div>
-                )}
-
-                {/* =================================================
-                    FINAL RESULT
-                ================================================= */}
+                {/* FINAL RESULT */}
 
                 {mockup && (
                   <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -2224,17 +2454,25 @@ photographed on a real fashion model.
                       }
                       className="flex flex-1 items-center justify-center gap-2 rounded-full bg-black py-3.5 text-xs font-bold text-white transition-all hover:bg-black/80"
                     >
-                      <Download size={15} />
+                      <Download
+                        size={15}
+                      />
                       Save Mockup
                     </button>
 
                     <button
                       type="button"
-                      onClick={finalizeMockup}
-                      disabled={mockupLoading}
+                      onClick={
+                        finalizeMockup
+                      }
+                      disabled={
+                        mockupLoading
+                      }
                       className="flex flex-1 items-center justify-center gap-2 rounded-full border border-black/10 bg-white py-3.5 text-xs font-bold transition-all hover:bg-black/5 disabled:opacity-40"
                     >
-                      <RefreshCw size={15} />
+                      <RefreshCw
+                        size={15}
+                      />
                       Regenerate
                     </button>
 
@@ -2272,8 +2510,10 @@ photographed on a real fashion model.
           </div>
 
           <div className="hidden items-center gap-2 rounded-full bg-white px-4 py-2 text-[9px] font-bold uppercase tracking-wider text-black/40 sm:flex">
+
             <ShieldCheck size={13} />
             AI assisted workflow
+
           </div>
 
         </div>
@@ -2282,23 +2522,29 @@ photographed on a real fashion model.
 
           <FeatureCard
             number="01"
-            icon={<ScanSearch size={18} />}
+            icon={
+              <ScanSearch size={18} />
+            }
             title="AI understands your reference"
             text="The garment is analyzed first so the editor knows which controls are relevant."
           />
 
           <FeatureCard
             number="02"
-            icon={<Scissors size={18} />}
+            icon={
+              <Scissors size={18} />
+            }
             title="Customize without losing the design"
             text="Parts set to Keep Reference remain unchanged while you modify only what you want."
           />
 
           <FeatureCard
             number="03"
-            icon={<WandSparkles size={18} />}
-            title="Finish with a realistic mockup"
-            text="The approved garment is placed on a realistic fashion model using both visual references."
+            icon={
+              <WandSparkles size={18} />
+            }
+            title="Generate with or without a prompt"
+            text="Describe your idea if you want changes, or leave the prompt empty and generate directly from your reference."
           />
 
         </div>
