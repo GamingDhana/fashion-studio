@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Loomé — AI Fashion & Custom Tailoring",
-  description:
-    "Design your dream outfit with AI, customize every detail, and have it tailored for you.",
+  title: "Atelier AI",
+  description: "AI Fashion Studio",
 };
 
 export default function RootLayout({
@@ -14,7 +14,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+
+        <Script
+          src="https://js.puter.com/v2/"
+          strategy="afterInteractive"
+        />
+      </body>
     </html>
   );
 }
