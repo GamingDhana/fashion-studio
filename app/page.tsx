@@ -9,6 +9,8 @@ import {
   Camera,
   Star,
   ChevronRight,
+  Ruler,
+  ShoppingBag,
 } from "lucide-react";
 
 const categories = [
@@ -38,17 +40,17 @@ const features = [
   {
     icon: Camera,
     title: "Upload inspiration",
-    text: "Upload a fashion reference and let AI analyze the garment.",
+    text: "Upload a fashion reference and create a design inspired by it.",
   },
   {
     icon: Sparkles,
-    title: "Customize with AI",
-    text: "Change only the parts you want while preserving the reference.",
+    title: "Customize your design",
+    text: "Tell us what you want to change and create your own fashion concept.",
   },
   {
     icon: WandSparkles,
     title: "Create your look",
-    text: "Generate your finished fashion concept from your design.",
+    text: "Turn your idea into a beautiful custom fashion design.",
   },
 ];
 
@@ -56,21 +58,21 @@ const trending = [
   {
     name: "Soft Denim Dress",
     category: "Everyday",
-    price: "$89",
+    price: "LKR 8,900",
     image:
       "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1000&q=85",
   },
   {
     name: "Midnight Evening",
     category: "Evening",
-    price: "$129",
+    price: "LKR 12,900",
     image:
       "https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=1000&q=85",
   },
   {
     name: "Modern Blouse",
     category: "New",
-    price: "$69",
+    price: "LKR 2,500",
     image:
       "https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?auto=format&fit=crop&w=1000&q=85",
   },
@@ -98,7 +100,6 @@ export default function HomePage() {
             </div>
           </Link>
 
-          {/* DESKTOP NAVIGATION */}
           <nav className="hidden items-center gap-8 md:flex">
             <Link
               href="/"
@@ -129,21 +130,13 @@ export default function HomePage() {
             </Link>
           </nav>
 
-          {/* HEADER BUTTONS */}
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-label="Favorites"
-              className="hidden h-10 w-10 items-center justify-center rounded-full border border-black/10 transition hover:bg-black hover:text-white sm:flex"
-            >
-              <Heart size={17} />
-            </button>
-
             <Link
               href="/tailor"
-              className="hidden items-center gap-2 rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-medium transition hover:border-[#b85c78] hover:bg-[#f8e8ed] hover:text-[#8f425d] lg:flex"
+              aria-label="Custom tailoring"
+              className="hidden h-10 w-10 items-center justify-center rounded-full border border-black/10 transition hover:bg-black hover:text-white sm:flex"
             >
-              Tailor
+              <Ruler size={17} />
             </Link>
 
             <Link
@@ -176,8 +169,8 @@ export default function HomePage() {
 
             <p className="mt-7 max-w-xl text-base leading-7 text-black/55 sm:text-lg">
               Turn your fashion ideas and favorite references into beautiful
-              custom designs with AI. Create the outfit you have always wanted
-              to wear.
+              custom designs. You can also send your dress reference,
+              measurements and details to our tailoring service.
             </p>
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
@@ -194,10 +187,10 @@ export default function HomePage() {
 
               <Link
                 href="/tailor"
-                className="flex items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-7 py-4 text-sm font-medium transition hover:border-[#b85c78] hover:bg-[#f8e8ed] hover:text-[#8f425d]"
+                className="flex items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-7 py-4 text-sm font-medium transition hover:border-black/20 hover:bg-black/[0.03]"
               >
-                Custom Tailoring
-                <ChevronRight size={16} />
+                Custom tailoring
+                <Ruler size={16} />
               </Link>
             </div>
 
@@ -209,14 +202,14 @@ export default function HomePage() {
                   <div className="h-7 w-7 rounded-full border-2 border-[#fffaf9] bg-[#8d6870]" />
                 </div>
 
-                <span>Loved by creators</span>
+                <span>Made for everyone</span>
               </div>
 
               <div className="h-4 w-px bg-black/10" />
 
               <div className="flex items-center gap-1">
                 <Star size={13} fill="currentColor" />
-                <span>AI fashion studio</span>
+                <span>Sri Lankan friendly pricing</span>
               </div>
             </div>
           </div>
@@ -281,7 +274,7 @@ export default function HomePage() {
             ].map((item) => (
               <Link
                 key={item}
-                href={item === "Custom" ? "/tailor" : "/shop"}
+                href="/shop"
                 className="whitespace-nowrap rounded-full border border-black/10 px-5 py-2.5 text-xs font-medium transition hover:border-[#b85c78] hover:bg-[#f8e8ed] hover:text-[#8f425d]"
               >
                 {item}
@@ -308,27 +301,16 @@ export default function HomePage() {
 
               <p className="mt-6 max-w-lg text-base leading-7 text-white/55">
                 Found a dress online? Have an outfit you love? Upload it as a
-                reference and let AI understand its garment type, shape,
-                sleeves, neckline, fabric and details.
+                reference and create a design based on your inspiration.
               </p>
 
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/ai-studio"
-                  className="mt-8 inline-flex items-center gap-3 rounded-full bg-white px-6 py-4 text-sm font-medium text-[#211b1d] transition hover:-translate-y-1 hover:bg-[#f8e8ed]"
-                >
-                  Open AI Studio
-                  <ArrowRight size={17} />
-                </Link>
-
-                <Link
-                  href="/tailor"
-                  className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/20 px-6 py-4 text-sm font-medium text-white transition hover:-translate-y-1 hover:bg-white/10"
-                >
-                  Custom Tailoring
-                  <ArrowRight size={17} />
-                </Link>
-              </div>
+              <Link
+                href="/ai-studio"
+                className="mt-8 inline-flex items-center gap-3 rounded-full bg-white px-6 py-4 text-sm font-medium text-[#211b1d] transition hover:-translate-y-1 hover:bg-[#f8e8ed]"
+              >
+                Open AI Studio
+                <ArrowRight size={17} />
+              </Link>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
@@ -358,6 +340,88 @@ export default function HomePage() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* TAILOR CTA */}
+      <section className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
+        <div className="overflow-hidden rounded-[2.5rem] bg-[#f3e5e9]">
+          <div className="grid items-center lg:grid-cols-[1fr_0.9fr]">
+            <div className="p-8 sm:p-12 lg:p-16">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#211b1d] text-white">
+                <Ruler size={21} />
+              </div>
+
+              <p className="mt-7 text-xs uppercase tracking-[0.25em] text-black/40">
+                Custom tailoring
+              </p>
+
+              <h2 className="mt-4 text-4xl font-semibold tracking-tight">
+                Have a dress
+                <br />
+                you want made?
+              </h2>
+
+              <p className="mt-5 max-w-lg text-sm leading-7 text-black/55">
+                Choose your dress type, upload front and back reference
+                images, enter only the measurements you need and request an
+                estimated price. We will contact you through WhatsApp with
+                more information and the exact price.
+              </p>
+
+              <div className="mt-7 grid gap-3 sm:grid-cols-2">
+                {[
+                  "Choose dress type",
+                  "Upload front & back",
+                  "Add measurements",
+                  "Get a reasonable estimate",
+                ].map((item, index) => (
+                  <div
+                    key={item}
+                    className="flex items-center gap-3 rounded-2xl bg-white/70 p-4"
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#211b1d] text-xs font-semibold text-white">
+                      {index + 1}
+                    </div>
+
+                    <span className="text-sm font-medium">{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Link
+                href="/tailor"
+                className="mt-8 inline-flex items-center gap-3 rounded-full bg-[#211b1d] px-7 py-4 text-sm font-medium text-white transition hover:-translate-y-1 hover:bg-[#b85c78]"
+              >
+                Start custom order
+                <ArrowRight size={17} />
+              </Link>
+            </div>
+
+            <div className="relative min-h-[430px] overflow-hidden lg:min-h-[560px]">
+              <img
+                src="https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=1100&q=90"
+                alt="Custom fashion tailoring"
+                loading="lazy"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+
+              <div className="absolute bottom-6 left-6 right-6 rounded-3xl border border-white/40 bg-white/90 p-5 shadow-xl backdrop-blur-xl">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f8e8ed] text-[#b85c78]">
+                    <Ruler size={18} />
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-black/40">Tailoring estimate</p>
+                    <p className="text-sm font-semibold">
+                      Sri Lankan LKR pricing
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -512,7 +576,7 @@ export default function HomePage() {
 
             <div className="p-8 sm:p-12 lg:p-16">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#211b1d] text-white">
-                <ImageIconIcon />
+                <Sparkles size={20} />
               </div>
 
               <p className="mt-7 text-xs uppercase tracking-[0.25em] text-black/40">
@@ -526,19 +590,18 @@ export default function HomePage() {
               </h2>
 
               <p className="mt-5 text-sm leading-7 text-black/55">
-                Our AI workflow starts by analyzing your reference. It
-                identifies the garment type and important visual details, then
-                shows only the customization options that make sense for that
-                garment.
+                Start with a reference image and build your own fashion idea
+                around it. You can also send your design to our custom tailoring
+                service.
               </p>
 
               <div className="mt-7 space-y-3">
                 {[
-                  "Identify the garment",
-                  "Analyze the visible details",
-                  "Customize only relevant parts",
-                  "Lock parts you want unchanged",
-                  "Generate the final design",
+                  "Choose your reference",
+                  "Describe your design",
+                  "Customize the details",
+                  "Create your concept",
+                  "Order custom tailoring if needed",
                 ].map((item, index) => (
                   <div
                     key={item}
@@ -553,23 +616,13 @@ export default function HomePage() {
                 ))}
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/ai-studio"
-                  className="mt-8 inline-flex items-center gap-3 rounded-full bg-[#211b1d] px-6 py-3.5 text-sm font-medium text-white transition hover:bg-[#b85c78]"
-                >
-                  Try reference design
-                  <ArrowRight size={16} />
-                </Link>
-
-                <Link
-                  href="/tailor"
-                  className="mt-8 inline-flex items-center gap-3 rounded-full border border-black/10 bg-white px-6 py-3.5 text-sm font-medium transition hover:border-[#b85c78] hover:text-[#b85c78]"
-                >
-                  Tailor a dress
-                  <ArrowRight size={16} />
-                </Link>
-              </div>
+              <Link
+                href="/ai-studio"
+                className="mt-8 inline-flex items-center gap-3 rounded-full bg-[#211b1d] px-6 py-3.5 text-sm font-medium text-white transition hover:bg-[#b85c78]"
+              >
+                Try reference design
+                <ArrowRight size={16} />
+              </Link>
             </div>
           </div>
         </div>
@@ -583,28 +636,28 @@ export default function HomePage() {
 
             <div className="relative">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f0c5d1] text-[#211b1d]">
-                <Sparkles size={22} />
+                <ShoppingBag size={22} />
               </div>
 
               <p className="mt-7 text-xs uppercase tracking-[0.25em] text-white/35">
-                Your next outfit starts here
+                Fashion made accessible
               </p>
 
               <h2 className="mx-auto mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-6xl">
-                Stop imagining it.
+                Design it.
                 <br />
-                Start designing it.
+                Wear it.
               </h2>
 
               <p className="mx-auto mt-6 max-w-xl text-sm leading-6 text-white/50">
-                Upload your favorite reference or simply tell us what you want
-                to wear. Your AI fashion studio is ready.
+                Explore our collection, create an AI fashion concept or send
+                your own dress reference and measurements for custom tailoring.
               </p>
 
-              <div className="flex flex-wrap justify-center gap-3">
+              <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                 <Link
                   href="/ai-studio"
-                  className="mt-8 inline-flex items-center gap-3 rounded-full bg-white px-7 py-4 text-sm font-semibold text-[#211b1d] transition hover:-translate-y-1 hover:bg-[#f0c5d1]"
+                  className="inline-flex items-center justify-center gap-3 rounded-full bg-white px-7 py-4 text-sm font-semibold text-[#211b1d] transition hover:-translate-y-1 hover:bg-[#f0c5d1]"
                 >
                   <WandSparkles size={17} />
                   Create my outfit
@@ -613,10 +666,10 @@ export default function HomePage() {
 
                 <Link
                   href="/tailor"
-                  className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/20 px-7 py-4 text-sm font-semibold text-white transition hover:-translate-y-1 hover:bg-white/10"
+                  className="inline-flex items-center justify-center gap-3 rounded-full border border-white/20 px-7 py-4 text-sm font-semibold text-white transition hover:bg-white/10"
                 >
-                  Custom Tailoring
-                  <ArrowRight size={16} />
+                  <Ruler size={17} />
+                  Custom tailoring
                 </Link>
               </div>
             </div>
@@ -638,7 +691,7 @@ export default function HomePage() {
               </Link>
 
               <p className="mt-5 max-w-md text-sm leading-6 text-black/45">
-                A modern AI fashion studio for turning inspiration, imagination
+                A modern fashion studio for turning inspiration, imagination
                 and personal style into beautiful designs.
               </p>
             </div>
@@ -700,17 +753,10 @@ export default function HomePage() {
                 </Link>
 
                 <Link
-                  href="/ai-studio"
+                  href="/shop"
                   className="block text-sm text-black/60 transition hover:text-black"
                 >
-                  AI Fashion
-                </Link>
-
-                <Link
-                  href="/ai-studio"
-                  className="block text-sm text-black/60 transition hover:text-black"
-                >
-                  Mockups
+                  Collection
                 </Link>
               </div>
             </div>
@@ -718,20 +764,10 @@ export default function HomePage() {
 
           <div className="mt-12 flex flex-col justify-between gap-3 border-t border-black/[0.06] pt-6 text-xs text-black/35 sm:flex-row">
             <p>© 2026 Atelier AI. All rights reserved.</p>
-
             <p>Designed with AI ✦</p>
           </div>
         </div>
       </footer>
     </main>
-  );
-}
-
-function ImageIconIcon() {
-  return (
-    <div className="relative">
-      <div className="h-5 w-5 rounded-md border-2 border-white" />
-      <div className="absolute bottom-1 left-1 h-2 w-2 rounded-full bg-white" />
-    </div>
   );
 }
