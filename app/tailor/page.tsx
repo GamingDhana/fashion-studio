@@ -1,27 +1,14 @@
 "use client";
 
-import { ChangeEvent, useMemo, useState } from "react";
-import Link from "next/link";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Camera,
-  Check,
-  Image as ImageIcon,
-  Ruler,
-  Sparkles,
-  Upload,
-  X,
-} from "lucide-react";
+import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 
 type DressType =
-  | "dress"
   | "blouse"
-  | "shirt"
+  | "dress"
   | "skirt"
-  | "trousers"
-  | "saree"
-  | "kurta";
+  | "pants"
+  | "shirt"
+  | "saree_blouse";
 
 type MeasurementField = {
   key: string;
@@ -30,11 +17,106 @@ type MeasurementField = {
   unit: string;
 };
 
-type GeneratedImage = {
-  url: string;
+type Measurements = Record<string, string>;
+
+type OrderForm = {
+  name: string;
+  whatsapp: string;
+  email: string;
+  address: string;
+  city: string;
+  notes: string;
 };
 
-const MEASUREMENTS: Record<DressType, MeasurementField[]> = {
+const dressTypes: {
+  value: DressType;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "blouse",
+    label: "Blouse",
+    description: "Custom blouse / top",
+  },
+  {
+    value: "dress",
+    label: "Dress",
+    description: "One-piece dress",
+  },
+  {
+    value: "skirt",
+    label: "Skirt",
+    description: "Custom skirt",
+  },
+  {
+    value: "pants",
+    label: "Pants",
+    description: "Trousers / pants",
+  },
+  {
+    value: "shirt",
+    label: "Shirt",
+    description: "Custom shirt",
+  },
+  {
+    value: "saree_blouse",
+    label: "Saree Blouse",
+    description: "Traditional blouse",
+  },
+];
+
+const measurementGuide: Record<DressType, MeasurementField[]> = {
+  blouse: [
+    {
+      key: "bust",
+      label: "Bust",
+      description: "Measure around the fullest part of your bust.",
+      unit: "cm",
+    },
+    {
+      key: "waist",
+      label: "Waist",
+      description: "Measure around the narrowest part of your waist.",
+      unit: "cm",
+    },
+    {
+      key: "shoulder",
+      label: "Shoulder",
+      description: "Measure from one shoulder point to the other.",
+      unit: "cm",
+    },
+    {
+      key: "blouseLength",
+      label: "Blouse Length",
+      description: "Measure from the shoulder down to your desired blouse length.",
+      unit: "cm",
+    },
+    {
+      key: "sleeveLength",
+      label: "Sleeve Length",
+      description: "Measure from the shoulder to the desired sleeve end.",
+      unit: "cm",
+    },
+    {
+      key: "upperArm",
+      label: "Upper Arm",
+      description: "Measure around the fullest part of your upper arm.",
+      unit: "cm",
+    },
+    {
+      key: "armhole",
+      label: "Armhole",
+      description: "Measure around the armhole area.",
+      unit: "cm",
+    },
+    {
+      key: "neck",
+      label: "Neck",
+      description: "Measure around the base of your neck.",
+      unit: "cm",
+    },
+  ],
+
   dress: [
     {
       key: "bust",
@@ -57,46 +139,13 @@ const MEASUREMENTS: Record<DressType, MeasurementField[]> = {
     {
       key: "shoulder",
       label: "Shoulder",
-      description: "Measure from one shoulder point to the other.",
+      description: "Measure from shoulder point to shoulder point.",
       unit: "cm",
     },
     {
       key: "dressLength",
       label: "Dress Length",
-      description: "Measure from your shoulder to the desired hem.",
-      unit: "cm",
-    },
-    {
-      key: "sleeveLength",
-      label: "Sleeve Length",
-      description: "Measure from shoulder to the desired sleeve end.",
-      unit: "cm",
-    },
-  ],
-
-  blouse: [
-    {
-      key: "bust",
-      label: "Bust",
-      description: "Measure around the fullest part of your bust.",
-      unit: "cm",
-    },
-    {
-      key: "waist",
-      label: "Waist",
-      description: "Measure around your natural waist.",
-      unit: "cm",
-    },
-    {
-      key: "shoulder",
-      label: "Shoulder",
-      description: "Measure across your shoulders.",
-      unit: "cm",
-    },
-    {
-      key: "blouseLength",
-      label: "Blouse Length",
-      description: "Measure from shoulder to the desired bottom.",
+      description: "Measure from shoulder to your desired dress length.",
       unit: "cm",
     },
     {
@@ -105,37 +154,16 @@ const MEASUREMENTS: Record<DressType, MeasurementField[]> = {
       description: "Measure from shoulder to sleeve end.",
       unit: "cm",
     },
-  ],
-
-  shirt: [
     {
-      key: "chest",
-      label: "Chest",
-      description: "Measure around the fullest part of your chest.",
+      key: "upperArm",
+      label: "Upper Arm",
+      description: "Measure around your upper arm.",
       unit: "cm",
     },
     {
-      key: "waist",
-      label: "Waist",
-      description: "Measure around your natural waist.",
-      unit: "cm",
-    },
-    {
-      key: "shoulder",
-      label: "Shoulder",
-      description: "Measure across your shoulders.",
-      unit: "cm",
-    },
-    {
-      key: "shirtLength",
-      label: "Shirt Length",
-      description: "Measure from shoulder to the desired bottom.",
-      unit: "cm",
-    },
-    {
-      key: "sleeveLength",
-      label: "Sleeve Length",
-      description: "Measure from shoulder to sleeve end.",
+      key: "neck",
+      label: "Neck",
+      description: "Measure around the base of your neck.",
       unit: "cm",
     },
   ],
@@ -156,12 +184,18 @@ const MEASUREMENTS: Record<DressType, MeasurementField[]> = {
     {
       key: "skirtLength",
       label: "Skirt Length",
-      description: "Measure from waist to desired hem.",
+      description: "Measure from your waist to your desired skirt length.",
+      unit: "cm",
+    },
+    {
+      key: "thigh",
+      label: "Thigh",
+      description: "Measure around the fullest part of your thigh.",
       unit: "cm",
     },
   ],
 
-  trousers: [
+  pants: [
     {
       key: "waist",
       label: "Waist",
@@ -177,73 +211,52 @@ const MEASUREMENTS: Record<DressType, MeasurementField[]> = {
     {
       key: "inseam",
       label: "Inseam",
-      description: "Measure from the crotch to the ankle.",
+      description: "Measure from the crotch to the desired trouser length.",
       unit: "cm",
     },
     {
-      key: "trouserLength",
-      label: "Trouser Length",
-      description: "Measure from waist to desired bottom.",
-      unit: "cm",
-    },
-  ],
-
-  saree: [
-    {
-      key: "waist",
-      label: "Waist",
-      description: "Measure around your natural waist.",
+      key: "outseam",
+      label: "Outseam",
+      description: "Measure from waist to the bottom of the trousers.",
       unit: "cm",
     },
     {
-      key: "hip",
-      label: "Hip",
-      description: "Measure around the fullest part of your hips.",
+      key: "thigh",
+      label: "Thigh",
+      description: "Measure around the fullest part of your thigh.",
       unit: "cm",
     },
     {
-      key: "blouseBust",
-      label: "Blouse Bust",
-      description: "Measure around the fullest part of your bust.",
-      unit: "cm",
-    },
-    {
-      key: "blouseLength",
-      label: "Blouse Length",
-      description: "Measure from shoulder to blouse bottom.",
+      key: "bottom",
+      label: "Bottom",
+      description: "Measure around the desired ankle/bottom opening.",
       unit: "cm",
     },
   ],
 
-  kurta: [
+  shirt: [
     {
-      key: "bust",
-      label: "Bust",
-      description: "Measure around the fullest part of your bust.",
+      key: "chest",
+      label: "Chest",
+      description: "Measure around the fullest part of your chest.",
       unit: "cm",
     },
     {
       key: "waist",
       label: "Waist",
       description: "Measure around your natural waist.",
-      unit: "cm",
-    },
-    {
-      key: "hip",
-      label: "Hip",
-      description: "Measure around the fullest part of your hips.",
       unit: "cm",
     },
     {
       key: "shoulder",
       label: "Shoulder",
-      description: "Measure across your shoulders.",
+      description: "Measure from shoulder point to shoulder point.",
       unit: "cm",
     },
     {
-      key: "kurtaLength",
-      label: "Kurta Length",
-      description: "Measure from shoulder to desired hem.",
+      key: "shirtLength",
+      label: "Shirt Length",
+      description: "Measure from shoulder to your desired shirt length.",
       unit: "cm",
     },
     {
@@ -252,104 +265,178 @@ const MEASUREMENTS: Record<DressType, MeasurementField[]> = {
       description: "Measure from shoulder to sleeve end.",
       unit: "cm",
     },
+    {
+      key: "neck",
+      label: "Neck",
+      description: "Measure around the base of your neck.",
+      unit: "cm",
+    },
+  ],
+
+  saree_blouse: [
+    {
+      key: "bust",
+      label: "Bust",
+      description: "Measure around the fullest part of your bust.",
+      unit: "cm",
+    },
+    {
+      key: "underBust",
+      label: "Under Bust",
+      description: "Measure directly below the bust.",
+      unit: "cm",
+    },
+    {
+      key: "waist",
+      label: "Waist",
+      description: "Measure around your natural waist.",
+      unit: "cm",
+    },
+    {
+      key: "shoulder",
+      label: "Shoulder",
+      description: "Measure from one shoulder point to the other.",
+      unit: "cm",
+    },
+    {
+      key: "blouseLength",
+      label: "Blouse Length",
+      description: "Measure from shoulder to desired blouse length.",
+      unit: "cm",
+    },
+    {
+      key: "sleeveLength",
+      label: "Sleeve Length",
+      description: "Measure from shoulder to sleeve end.",
+      unit: "cm",
+    },
+    {
+      key: "upperArm",
+      label: "Upper Arm",
+      description: "Measure around the fullest part of your upper arm.",
+      unit: "cm",
+    },
+    {
+      key: "neck",
+      label: "Neck",
+      description: "Measure around the base of your neck.",
+      unit: "cm",
+    },
   ],
 };
 
-const DRESS_NAMES: Record<DressType, string> = {
-  dress: "Dress",
-  blouse: "Blouse",
-  shirt: "Shirt",
-  skirt: "Skirt",
-  trousers: "Trousers",
-  saree: "Saree",
-  kurta: "Kurta",
+const basePrices: Record<DressType, number> = {
+  blouse: 3500,
+  dress: 6500,
+  skirt: 4000,
+  pants: 4500,
+  shirt: 4500,
+  saree_blouse: 4000,
 };
 
-function getPuter(): any {
-  if (typeof window === "undefined") {
-    return null;
-  }
+const materialPrices: Record<DressType, number> = {
+  blouse: 3500,
+  dress: 5000,
+  skirt: 3000,
+  pants: 3200,
+  shirt: 3200,
+  saree_blouse: 4000,
+};
 
-  const win = window as any;
+const sourcingCosts: Record<DressType, number> = {
+  blouse: 1000,
+  dress: 1500,
+  skirt: 1000,
+  pants: 1000,
+  shirt: 1000,
+  saree_blouse: 1200,
+};
 
-  if (!win.puter) {
-    return null;
-  }
-
-  return win.puter;
+function formatLKR(value: number): string {
+  return `LKR ${Math.round(value).toLocaleString("en-LK")}`;
 }
 
-function getImageUrl(result: any): string | null {
-  if (!result) {
-    return null;
+function getFilePreview(file: File | null): string {
+  if (!file) {
+    return "";
   }
 
-  if (typeof result === "string") {
-    return result;
-  }
-
-  if (typeof result.url === "string") {
-    return result.url;
-  }
-
-  if (typeof result.src === "string") {
-    return result.src;
-  }
-
-  if (typeof result.imageUrl === "string") {
-    return result.imageUrl;
-  }
-
-  if (typeof result.data?.url === "string") {
-    return result.data.url;
-  }
-
-  if (typeof result.image?.url === "string") {
-    return result.image.url;
-  }
-
-  if (typeof result.image?.src === "string") {
-    return result.image.src;
-  }
-
-  return null;
+  return URL.createObjectURL(file);
 }
 
 export default function TailorPage() {
-  const [dressType, setDressType] = useState<DressType>("dress");
+  const [dressType, setDressType] = useState<DressType>("blouse");
 
-  const [frontImage, setFrontImage] = useState<string | null>(null);
-  const [backImage, setBackImage] = useState<string | null>(null);
+  const [frontImage, setFrontImage] = useState<File | null>(null);
+  const [backImage, setBackImage] = useState<File | null>(null);
 
-  const [measurements, setMeasurements] = useState<
-    Record<string, string>
-  >({});
+  const [frontPreview, setFrontPreview] = useState("");
+  const [backPreview, setBackPreview] = useState("");
 
-  const [prompt, setPrompt] = useState("");
+  const [measurements, setMeasurements] = useState<Measurements>({});
 
-  const [activeGuide, setActiveGuide] = useState<string | null>(null);
+  const [activeGuide, setActiveGuide] = useState<string>("bust");
 
-  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>(
-    []
-  );
+  const [orderForm, setOrderForm] = useState<OrderForm>({
+    name: "",
+    whatsapp: "",
+    email: "",
+    address: "",
+    city: "",
+    notes: "",
+  });
 
-  const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const fields = useMemo(() => {
-    return MEASUREMENTS[dressType];
-  }, [dressType]);
+  const currentMeasurements = measurementGuide[dressType];
 
-  function handleDressChange(type: DressType) {
-    setDressType(type);
+  const completedMeasurements = useMemo(() => {
+    return currentMeasurements.filter(
+      (field) =>
+        measurements[field.key] &&
+        measurements[field.key].trim() !== ""
+    ).length;
+  }, [currentMeasurements, measurements]);
+
+  const estimatedPrice = useMemo(() => {
+    const base = basePrices[dressType];
+    const material = materialPrices[dressType];
+    const sourcing = sourcingCosts[dressType];
+
+    const measurementCount = completedMeasurements;
+
+    const measurementAdjustment =
+      measurementCount >= currentMeasurements.length
+        ? 0
+        : 500;
+
+    const delivery = 700;
+
+    return base + material + sourcing + delivery + measurementAdjustment;
+  }, [dressType, completedMeasurements, currentMeasurements.length]);
+
+  function handleDressTypeChange(value: DressType) {
+    setDressType(value);
     setMeasurements({});
-    setGeneratedImages([]);
-    setError("");
-    setMessage("");
+    setActiveGuide(measurementGuide[value][0]?.key || "");
+    setSubmitted(false);
+    setErrorMessage("");
   }
 
-  function handleImageUpload(
+  function handleMeasurementChange(
+    key: string,
+    value: string
+  ) {
+    const cleaned = value.replace(/[^0-9.]/g, "");
+
+    setMeasurements((previous) => ({
+      ...previous,
+      [key]: cleaned,
+    }));
+  }
+
+  function handleImageChange(
     event: ChangeEvent<HTMLInputElement>,
     side: "front" | "back"
   ) {
@@ -360,666 +447,817 @@ export default function TailorPage() {
     }
 
     if (!file.type.startsWith("image/")) {
-      setError("Please upload a valid image.");
+      setErrorMessage("Please upload an image file.");
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setError("Image must be smaller than 10MB.");
+      setErrorMessage("Please choose an image smaller than 10 MB.");
       return;
     }
 
-    const reader = new FileReader();
+    setErrorMessage("");
 
-    reader.onload = () => {
-      const result = reader.result;
-
-      if (typeof result !== "string") {
-        setError("Unable to read the image.");
-        return;
-      }
-
-      if (side === "front") {
-        setFrontImage(result);
-      } else {
-        setBackImage(result);
-      }
-
-      setError("");
-    };
-
-    reader.readAsDataURL(file);
-  }
-
-  function removeImage(side: "front" | "back") {
     if (side === "front") {
-      setFrontImage(null);
+      setFrontImage(file);
+
+      const preview = getFilePreview(file);
+      setFrontPreview(preview);
     } else {
-      setBackImage(null);
+      setBackImage(file);
+
+      const preview = getFilePreview(file);
+      setBackPreview(preview);
     }
   }
 
-  function updateMeasurement(key: string, value: string) {
-    setMeasurements((previous) => ({
+  function handleCustomerChange(
+    field: keyof OrderForm,
+    value: string
+  ) {
+    setOrderForm((previous) => ({
       ...previous,
-      [key]: value,
+      [field]: value,
     }));
   }
 
-  function validateMeasurements() {
-    for (const field of fields) {
-      const value = measurements[field.key];
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-      if (!value || Number(value) <= 0) {
-        return `Please enter your ${field.label}.`;
-      }
+    setErrorMessage("");
+
+    if (!frontImage || !backImage) {
+      setErrorMessage(
+        "Please upload both the front and back reference images."
+      );
+      return;
     }
 
-    return null;
+    if (completedMeasurements !== currentMeasurements.length) {
+      setErrorMessage(
+        "Please complete all required measurements for the selected dress type."
+      );
+      return;
+    }
+
+    if (!orderForm.name.trim()) {
+      setErrorMessage("Please enter your name.");
+      return;
+    }
+
+    if (!orderForm.whatsapp.trim()) {
+      setErrorMessage("Please enter your WhatsApp number.");
+      return;
+    }
+
+    if (!orderForm.address.trim()) {
+      setErrorMessage("Please enter your delivery address.");
+      return;
+    }
+
+    if (!orderForm.city.trim()) {
+      setErrorMessage("Please enter your city.");
+      return;
+    }
+
+    setSubmitted(true);
   }
 
-  async function generateDesign() {
-    setError("");
-    setMessage("");
-    setGeneratedImages([]);
+  function resetOrder() {
+    setSubmitted(false);
+    setErrorMessage("");
+  }
 
-    if (!frontImage && !backImage && !prompt.trim()) {
-      setError(
-        "Upload a front/back reference image or enter a design prompt."
-      );
-      return;
-    }
+  if (submitted) {
+    return (
+      <main className="min-h-screen bg-[#fffaf9] px-5 py-12 text-[#211b1d]">
+        <div className="mx-auto max-w-3xl">
+          <div className="rounded-[2rem] border border-black/10 bg-white p-8 text-center shadow-xl sm:p-12">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#f8e8ed] text-4xl">
+              ✓
+            </div>
 
-    const measurementError = validateMeasurements();
+            <p className="mt-7 text-xs font-semibold uppercase tracking-[0.25em] text-[#b85c78]">
+              Request received
+            </p>
 
-    if (measurementError) {
-      setError(measurementError);
-      return;
-    }
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
+              Thank you, {orderForm.name}
+            </h1>
 
-    const puter = getPuter();
+            <p className="mx-auto mt-6 max-w-xl text-sm leading-7 text-black/55">
+              We have received your custom tailoring request and your
+              reference images and measurements.
+            </p>
 
-    if (!puter?.ai?.txt2img) {
-      setError(
-        "Puter.js is not available. Please make sure the Puter.js script is loaded in your layout."
-      );
-      return;
-    }
+            <div className="mx-auto mt-8 max-w-md rounded-2xl bg-[#f8f1f0] p-5 text-left">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-black/50">
+                  Estimated range
+                </span>
 
-    const measurementText = fields
-      .map((field) => {
-        const value = measurements[field.key];
+                <span className="text-lg font-semibold">
+                  {formatLKR(estimatedPrice - 1000)} -{" "}
+                  {formatLKR(estimatedPrice + 1500)}
+                </span>
+              </div>
 
-        return `${field.label}: ${value}${field.unit}`;
-      })
-      .join(", ");
+              <p className="mt-3 text-xs leading-5 text-black/45">
+                This is only an approximate estimate. The final price depends
+                on the actual fabric, design details, tailoring work and
+                delivery.
+              </p>
+            </div>
 
-    const referenceText =
-      frontImage || backImage
-        ? "Use the uploaded front and back reference images as the main garment reference. Preserve the important garment structure, silhouette, neckline, sleeves, proportions, fabric appearance and design details."
-        : "Create the garment from the user's written design description.";
+            <div className="mt-8 rounded-2xl border border-[#e4c3cd] bg-[#fff8fa] p-5 text-left">
+              <p className="font-semibold">
+                We will contact you through WhatsApp
+              </p>
 
-    const userPrompt = prompt.trim()
-      ? `User design instructions: ${prompt.trim()}`
-      : "Create a professional fashion mockup based on the reference.";
+              <p className="mt-2 text-sm leading-6 text-black/55">
+                We will contact you on WhatsApp for more information,
+                confirmation of the design, exact material requirements and
+                the final exact price.
+              </p>
+            </div>
 
-    const finalPrompt = `
-Create a professional fashion design mockup.
+            <p className="mt-6 text-sm text-black/45">
+              WhatsApp: {orderForm.whatsapp}
+            </p>
 
-Garment type: ${DRESS_NAMES[dressType]}.
-
-${referenceText}
-
-${userPrompt}
-
-Measurements:
-${measurementText}
-
-Important:
-- Create a realistic garment design.
-- Keep the garment type correct.
-- Respect the provided measurements and proportions.
-- Preserve the reference design when reference images are provided.
-- Do not randomly change the garment structure.
-- Show a clean professional fashion presentation.
-- The output should look like a real clothing design/mockup.
-- Do not place measurement numbers or technical text over the garment.
-`;
-
-    setGenerating(true);
-
-    try {
-      const options = {
-        width: 1024,
-        height: 1024,
-      };
-
-      let result: any;
-
-      /*
-       * Puter.js API.
-       *
-       * Different Puter.js versions can return different image objects,
-       * therefore the result is handled through getImageUrl().
-       */
-      result = await puter.ai.txt2img(finalPrompt, options);
-
-      const imageUrl = getImageUrl(result);
-
-      if (!imageUrl) {
-        console.error("Unexpected Puter image result:", result);
-
-        setError(
-          "Puter generated an image, but the returned image URL could not be found."
-        );
-
-        return;
-      }
-
-      setGeneratedImages([
-        {
-          url: imageUrl,
-        },
-      ]);
-
-      setMessage("Your fashion mockup has been generated.");
-    } catch (generationError) {
-      console.error("PUTER IMAGE GENERATION ERROR:", generationError);
-
-      setError(
-        generationError instanceof Error
-          ? generationError.message
-          : "Image generation failed."
-      );
-    } finally {
-      setGenerating(false);
-    }
+            <button
+              type="button"
+              onClick={resetOrder}
+              className="mt-8 rounded-full bg-[#211b1d] px-7 py-3.5 text-sm font-medium text-white transition hover:bg-[#b85c78]"
+            >
+              Create another request
+            </button>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
     <main className="min-h-screen bg-[#fffaf9] text-[#211b1d]">
-      {/* HEADER */}
-      <header className="sticky top-0 z-50 border-b border-black/[0.06] bg-[#fffaf9]/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-5 lg:px-8">
-          <Link
-            href="/"
-            className="flex items-center gap-3"
+      <header className="border-b border-black/[0.06] bg-white">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 lg:px-8">
+          <a href="/" className="font-semibold tracking-tight">
+            Atelier AI
+          </a>
+
+          <a
+            href="/ai-studio"
+            className="rounded-full border border-black/10 px-4 py-2 text-sm transition hover:bg-black hover:text-white"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#211b1d] text-white">
-              <Sparkles size={18} />
-            </div>
-
-            <div>
-              <p className="text-lg font-semibold">
-                Atelier AI
-              </p>
-
-              <p className="text-[10px] uppercase tracking-[0.25em] text-black/40">
-                Tailor Studio
-              </p>
-            </div>
-          </Link>
-
-          <Link
-            href="/"
-            className="flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm font-medium transition hover:bg-black hover:text-white"
-          >
-            <ArrowLeft size={15} />
-            Home
-          </Link>
+            AI Studio
+          </a>
         </div>
       </header>
 
-      {/* INTRO */}
-      <section className="mx-auto max-w-7xl px-5 pb-10 pt-12 lg:px-8 lg:pt-16">
+      <section className="mx-auto max-w-7xl px-5 pb-20 pt-12 lg:px-8">
         <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#dca5b7]/40 bg-[#f8e8ed] px-4 py-2 text-xs font-medium text-[#8f425d]">
-            <Ruler size={14} />
-            Custom fashion design
-          </div>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#b85c78]">
+            Custom tailoring
+          </p>
 
-          <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-6xl">
-            Design your perfect garment.
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-6xl">
+            Make your reference
+            <br />
+            <span className="text-[#b85c78]">fit you perfectly.</span>
           </h1>
 
-          <p className="mt-5 max-w-2xl text-base leading-7 text-black/50">
-            Choose your garment, upload front and back references, enter only
-            the measurements that matter, and describe anything you want to
-            customize.
+          <p className="mt-6 max-w-2xl text-base leading-7 text-black/55">
+            Choose your garment, upload the front and back reference images,
+            enter the measurements needed for that garment, and request a
+            custom-made order.
           </p>
         </div>
-      </section>
 
-      <section className="mx-auto max-w-7xl px-5 pb-24 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-          {/* LEFT */}
-          <div className="space-y-6">
+        <div className="mt-12 grid gap-8 lg:grid-cols-[1.35fr_0.65fr]">
+          <div className="space-y-8">
             {/* DRESS TYPE */}
-            <div className="rounded-[2rem] border border-black/[0.07] bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between">
+            <section className="rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm sm:p-8">
+              <div className="flex items-start justify-between gap-5">
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-black/35">
                     Step 01
                   </p>
 
-                  <h2 className="mt-2 text-xl font-semibold">
-                    Choose garment
+                  <h2 className="mt-2 text-2xl font-semibold">
+                    Select your garment
                   </h2>
-                </div>
 
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f8e8ed] text-[#b85c78]">
-                  <Sparkles size={17} />
+                  <p className="mt-2 text-sm text-black/45">
+                    Measurements will automatically change based on your
+                    selection.
+                  </p>
                 </div>
               </div>
 
-              <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {(Object.keys(DRESS_NAMES) as DressType[]).map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => handleDressChange(type)}
-                    className={`rounded-2xl border px-4 py-3 text-sm font-medium transition ${
-                      dressType === type
-                        ? "border-[#b85c78] bg-[#f8e8ed] text-[#8f425d]"
-                        : "border-black/10 hover:border-black/20"
-                    }`}
-                  >
-                    {DRESS_NAMES[type]}
-                  </button>
-                ))}
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {dressTypes.map((type) => {
+                  const selected = dressType === type.value;
+
+                  return (
+                    <button
+                      key={type.value}
+                      type="button"
+                      onClick={() =>
+                        handleDressTypeChange(type.value)
+                      }
+                      className={`rounded-2xl border p-4 text-left transition ${
+                        selected
+                          ? "border-[#b85c78] bg-[#fff3f6]"
+                          : "border-black/10 bg-white hover:border-black/20"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold">
+                          {type.label}
+                        </span>
+
+                        <span
+                          className={`flex h-5 w-5 items-center justify-center rounded-full border ${
+                            selected
+                              ? "border-[#b85c78] bg-[#b85c78] text-white"
+                              : "border-black/20"
+                          }`}
+                        >
+                          {selected ? "✓" : ""}
+                        </span>
+                      </div>
+
+                      <p className="mt-2 text-xs text-black/45">
+                        {type.description}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
-            </div>
+            </section>
 
             {/* REFERENCES */}
-            <div className="rounded-[2rem] border border-black/[0.07] bg-white p-6 shadow-sm">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-black/35">
-                  Step 02
-                </p>
+            <section className="rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm sm:p-8">
+              <p className="text-xs uppercase tracking-[0.2em] text-black/35">
+                Step 02
+              </p>
 
-                <h2 className="mt-2 text-xl font-semibold">
-                  Reference images
-                </h2>
+              <h2 className="mt-2 text-2xl font-semibold">
+                Add your reference
+              </h2>
 
-                <p className="mt-2 text-sm leading-6 text-black/45">
-                  Upload the front and back of the garment. You can also create
-                  a design using only your written prompt.
-                </p>
+              <p className="mt-2 text-sm leading-6 text-black/45">
+                Upload clear front and back images of the clothing design you
+                want us to make.
+              </p>
+
+              <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                <label className="group cursor-pointer">
+                  <div className="relative flex min-h-[280px] items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-black/10 bg-[#faf6f5] transition group-hover:border-[#b85c78]">
+                    {frontPreview ? (
+                      <img
+                        src={frontPreview}
+                        alt="Front reference preview"
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="px-6 text-center">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl shadow-sm">
+                          ↑
+                        </div>
+
+                        <p className="mt-4 font-semibold">
+                          Front image
+                        </p>
+
+                        <p className="mt-2 text-xs leading-5 text-black/40">
+                          Upload the front view of your reference.
+                        </p>
+                      </div>
+                    )}
+
+                    {frontPreview && (
+                      <div className="absolute bottom-4 left-4 rounded-full bg-white/90 px-4 py-2 text-xs font-semibold shadow-lg">
+                        Change front image
+                      </div>
+                    )}
+                  </div>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) =>
+                      handleImageChange(event, "front")
+                    }
+                  />
+                </label>
+
+                <label className="group cursor-pointer">
+                  <div className="relative flex min-h-[280px] items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-black/10 bg-[#faf6f5] transition group-hover:border-[#b85c78]">
+                    {backPreview ? (
+                      <img
+                        src={backPreview}
+                        alt="Back reference preview"
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="px-6 text-center">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl shadow-sm">
+                          ↑
+                        </div>
+
+                        <p className="mt-4 font-semibold">
+                          Back image
+                        </p>
+
+                        <p className="mt-2 text-xs leading-5 text-black/40">
+                          Upload the back view of your reference.
+                        </p>
+                      </div>
+                    )}
+
+                    {backPreview && (
+                      <div className="absolute bottom-4 left-4 rounded-full bg-white/90 px-4 py-2 text-xs font-semibold shadow-lg">
+                        Change back image
+                      </div>
+                    )}
+                  </div>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) =>
+                      handleImageChange(event, "back")
+                    }
+                  />
+                </label>
               </div>
-
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                {/* FRONT */}
-                <ReferenceUpload
-                  title="Front reference"
-                  image={frontImage}
-                  onUpload={(event) =>
-                    handleImageUpload(event, "front")
-                  }
-                  onRemove={() => removeImage("front")}
-                />
-
-                {/* BACK */}
-                <ReferenceUpload
-                  title="Back reference"
-                  image={backImage}
-                  onUpload={(event) =>
-                    handleImageUpload(event, "back")
-                  }
-                  onRemove={() => removeImage("back")}
-                />
-              </div>
-            </div>
+            </section>
 
             {/* MEASUREMENTS */}
-            <div className="rounded-[2rem] border border-black/[0.07] bg-white p-6 shadow-sm">
-              <div className="flex items-start justify-between gap-4">
+            <section className="rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm sm:p-8">
+              <div className="flex flex-col justify-between gap-5 sm:flex-row">
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-black/35">
                     Step 03
                   </p>
 
-                  <h2 className="mt-2 text-xl font-semibold">
+                  <h2 className="mt-2 text-2xl font-semibold">
                     Your measurements
                   </h2>
 
                   <p className="mt-2 text-sm leading-6 text-black/45">
-                    Only measurements required for{" "}
-                    {DRESS_NAMES[dressType].toLowerCase()} are shown.
+                    Only the measurements needed for{" "}
+                    <strong className="text-black/70">
+                      {dressTypes.find(
+                        (item) => item.value === dressType
+                      )?.label}
+                    </strong>{" "}
+                    are shown.
                   </p>
                 </div>
 
-                <Ruler className="mt-1 text-[#b85c78]" size={21} />
+                <div className="rounded-full bg-[#f8e8ed] px-4 py-2 text-xs font-semibold text-[#8f425d]">
+                  {completedMeasurements}/{currentMeasurements.length}{" "}
+                  completed
+                </div>
               </div>
 
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                {fields.map((field) => (
-                  <div key={field.key}>
-                    <div className="mb-2 flex items-center justify-between">
-                      <label
-                        htmlFor={field.key}
-                        className="text-sm font-medium"
-                      >
-                        {field.label}
-                      </label>
+              <div className="mt-7 grid gap-3">
+                {currentMeasurements.map((field) => {
+                  const active = activeGuide === field.key;
+                  const completed =
+                    measurements[field.key]?.trim() !== "";
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setActiveGuide(
-                            activeGuide === field.key
-                              ? null
-                              : field.key
-                          )
-                        }
-                        className="text-xs font-medium text-[#b85c78] hover:underline"
-                      >
-                        How to measure
-                      </button>
-                    </div>
+                  return (
+                    <div
+                      key={field.key}
+                      className={`rounded-2xl border p-4 transition ${
+                        active
+                          ? "border-[#b85c78] bg-[#fff8fa]"
+                          : "border-black/10"
+                      }`}
+                    >
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setActiveGuide(field.key)
+                          }
+                          className="text-left"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
+                                completed
+                                  ? "bg-[#b85c78] text-white"
+                                  : "bg-[#f3eeee] text-black/45"
+                              }`}
+                            >
+                              {completed ? "✓" : "?"}
+                            </span>
 
-                    <div className="relative">
-                      <input
-                        id={field.key}
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={measurements[field.key] || ""}
-                        onChange={(event) =>
-                          updateMeasurement(
-                            field.key,
-                            event.target.value
-                          )
-                        }
-                        placeholder="Enter measurement"
-                        className="w-full rounded-2xl border border-black/10 bg-[#fffaf9] px-4 py-3 pr-14 text-sm outline-none transition focus:border-[#b85c78] focus:ring-2 focus:ring-[#b85c78]/10"
-                      />
+                            <div>
+                              <p className="text-sm font-semibold">
+                                {field.label}
+                              </p>
 
-                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-black/35">
-                        {field.unit}
-                      </span>
-                    </div>
+                              <p className="mt-1 text-xs text-black/40">
+                                {field.description}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
 
-                    {activeGuide === field.key && (
-                      <div className="mt-2 rounded-2xl bg-[#f8e8ed] p-4 text-xs leading-5 text-[#6f3a4b]">
-                        <div className="flex gap-2">
-                          <Ruler
-                            size={15}
-                            className="mt-0.5 shrink-0"
+                        <div className="relative w-full sm:w-36">
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={measurements[field.key] || ""}
+                            onChange={(event) =>
+                              handleMeasurementChange(
+                                field.key,
+                                event.target.value
+                              )
+                            }
+                            placeholder="0"
+                            className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 pr-12 text-sm outline-none transition focus:border-[#b85c78] focus:ring-2 focus:ring-[#b85c78]/10"
                           />
 
-                          <span>{field.description}</span>
+                          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-black/35">
+                            {field.unit}
+                          </span>
                         </div>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
 
-            {/* PROMPT */}
-            <div className="rounded-[2rem] border border-black/[0.07] bg-white p-6 shadow-sm">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-black/35">
-                  Step 04
-                </p>
-
-                <h2 className="mt-2 text-xl font-semibold">
-                  Describe your design
-                </h2>
-
-                <p className="mt-2 text-sm leading-6 text-black/45">
-                  Tell the AI what you want. For example: change the fabric,
-                  color, sleeve style, neckline or embroidery.
-                </p>
-              </div>
-
-              <textarea
-                value={prompt}
-                onChange={(event) => setPrompt(event.target.value)}
-                placeholder="Example: Keep the same shape but make it deep emerald green with long puff sleeves and subtle gold embroidery..."
-                rows={6}
-                className="mt-5 w-full resize-none rounded-2xl border border-black/10 bg-[#fffaf9] p-4 text-sm leading-6 outline-none transition focus:border-[#b85c78] focus:ring-2 focus:ring-[#b85c78]/10"
-              />
-            </div>
-
-            {/* GENERATE */}
-            <div className="rounded-[2rem] bg-[#211b1d] p-6 text-white shadow-xl">
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#f0c5d1] text-[#211b1d]">
-                  <Sparkles size={19} />
-                </div>
-
-                <div>
-                  <h2 className="font-semibold">
-                    Ready to create?
-                  </h2>
-
-                  <p className="mt-1 text-sm leading-6 text-white/45">
-                    Puter.js will generate your fashion mockup using your
-                    references, measurements and prompt.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={generateDesign}
-                disabled={generating}
-                className="mt-6 flex w-full items-center justify-center gap-3 rounded-full bg-white px-6 py-4 text-sm font-semibold text-[#211b1d] transition hover:-translate-y-0.5 hover:bg-[#f0c5d1] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {generating ? (
-                  <>
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={17} />
-                    Generate fashion mockup
-                    <ArrowRight size={16} />
-                  </>
-                )}
-              </button>
-            </div>
-
-            {error && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                {error}
-              </div>
-            )}
-
-            {message && (
-              <div className="flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-                <Check size={17} />
-                {message}
-              </div>
-            )}
-          </div>
-
-          {/* RIGHT / PREVIEW */}
-          <div className="lg:sticky lg:top-28 lg:self-start">
-            <div className="overflow-hidden rounded-[2.5rem] border border-black/[0.07] bg-white shadow-sm">
-              <div className="border-b border-black/[0.06] p-6">
-                <p className="text-xs uppercase tracking-[0.2em] text-black/35">
-                  Design preview
-                </p>
-
-                <h2 className="mt-2 text-2xl font-semibold">
-                  {DRESS_NAMES[dressType]} mockup
-                </h2>
-              </div>
-
-              {generatedImages.length > 0 ? (
-                <div className="p-4">
-                  {generatedImages.map((image, index) => (
-                    <div
-                      key={`${image.url}-${index}`}
-                      className="overflow-hidden rounded-[2rem] bg-[#f5eeec]"
-                    >
-                      <img
-                        src={image.url}
-                        alt={`${DRESS_NAMES[dressType]} generated mockup`}
-                        className="w-full object-cover"
-                      />
+                      {active && (
+                        <div className="mt-4 rounded-xl bg-white p-4 text-xs leading-5 text-black/50">
+                          <strong className="text-black/70">
+                            How to measure:
+                          </strong>{" "}
+                          {field.description} Keep the measuring tape
+                          comfortably fitted without pulling it too tight.
+                        </div>
+                      )}
                     </div>
-                  ))}
+                  );
+                })}
+              </div>
 
-                  <div className="mt-4 rounded-2xl bg-[#f8e8ed] p-4">
-                    <p className="text-xs font-semibold text-[#8f425d]">
-                      Generated design
-                    </p>
-
-                    <p className="mt-1 text-xs leading-5 text-[#6f3a4b]">
-                      Your reference, measurements and design instructions were
-                      used to create this mockup.
-                    </p>
+              {/* MEASUREMENT GUIDE */}
+              <div className="mt-6 rounded-3xl bg-[#f7f1ef] p-6">
+                <div className="flex gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-xl">
+                    📏
                   </div>
-                </div>
-              ) : (
-                <div className="p-6">
-                  <div className="flex min-h-[600px] flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-black/10 bg-[#fffaf9] px-8 text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f8e8ed] text-[#b85c78]">
-                      <ImageIcon size={27} />
-                    </div>
 
-                    <h3 className="mt-6 text-lg font-semibold">
-                      Your design will appear here
+                  <div>
+                    <h3 className="font-semibold">
+                      Measurement guide
                     </h3>
 
-                    <p className="mt-3 max-w-sm text-sm leading-6 text-black/40">
-                      Upload references, add your measurements and describe
-                      your idea. Your generated fashion mockup will appear in
-                      this area.
+                    <p className="mt-2 text-xs leading-5 text-black/50">
+                      Use a soft measuring tape. Stand naturally and keep the
+                      tape level around your body. Ask someone to help you for
+                      more accurate measurements.
                     </p>
 
-                    <div className="mt-7 grid w-full max-w-sm gap-3">
-                      <PreviewStatus
-                        active={Boolean(frontImage)}
-                        text="Front reference"
-                      />
-
-                      <PreviewStatus
-                        active={Boolean(backImage)}
-                        text="Back reference"
-                      />
-
-                      <PreviewStatus
-                        active={
-                          fields.length > 0 &&
-                          fields.every(
-                            (field) =>
-                              Boolean(measurements[field.key])
-                          )
-                        }
-                        text="Required measurements"
-                      />
-
-                      <PreviewStatus
-                        active={Boolean(prompt.trim())}
-                        text="Design instructions"
-                      />
-                    </div>
+                    <p className="mt-3 text-xs font-medium text-[#8f425d]">
+                      Tip: Do not pull the tape too tightly.
+                    </p>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            </section>
+
+            {/* CUSTOMER */}
+            <section className="rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm sm:p-8">
+              <p className="text-xs uppercase tracking-[0.2em] text-black/35">
+                Step 04
+              </p>
+
+              <h2 className="mt-2 text-2xl font-semibold">
+                Your contact details
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-black/45">
+                We need these details so our tailoring team can contact you
+                about the order.
+              </p>
+
+              <form
+                onSubmit={handleSubmit}
+                className="mt-7 space-y-5"
+              >
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <label>
+                    <span className="text-xs font-semibold">
+                      Full name *
+                    </span>
+
+                    <input
+                      type="text"
+                      value={orderForm.name}
+                      onChange={(event) =>
+                        handleCustomerChange(
+                          "name",
+                          event.target.value
+                        )
+                      }
+                      placeholder="Your name"
+                      className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-[#b85c78]"
+                    />
+                  </label>
+
+                  <label>
+                    <span className="text-xs font-semibold">
+                      WhatsApp number *
+                    </span>
+
+                    <input
+                      type="tel"
+                      value={orderForm.whatsapp}
+                      onChange={(event) =>
+                        handleCustomerChange(
+                          "whatsapp",
+                          event.target.value
+                        )
+                      }
+                      placeholder="+94 7X XXX XXXX"
+                      className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-[#b85c78]"
+                    />
+                  </label>
+                </div>
+
+                <label>
+                  <span className="text-xs font-semibold">
+                    Email
+                  </span>
+
+                  <input
+                    type="email"
+                    value={orderForm.email}
+                    onChange={(event) =>
+                      handleCustomerChange(
+                        "email",
+                        event.target.value
+                      )
+                    }
+                    placeholder="you@example.com"
+                    className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-[#b85c78]"
+                  />
+                </label>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <label>
+                    <span className="text-xs font-semibold">
+                      City *
+                    </span>
+
+                    <input
+                      type="text"
+                      value={orderForm.city}
+                      onChange={(event) =>
+                        handleCustomerChange(
+                          "city",
+                          event.target.value
+                        )
+                      }
+                      placeholder="Colombo"
+                      className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-[#b85c78]"
+                    />
+                  </label>
+
+                  <label>
+                    <span className="text-xs font-semibold">
+                      Delivery address *
+                    </span>
+
+                    <input
+                      type="text"
+                      value={orderForm.address}
+                      onChange={(event) =>
+                        handleCustomerChange(
+                          "address",
+                          event.target.value
+                        )
+                      }
+                      placeholder="Street / house / area"
+                      className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-[#b85c78]"
+                    />
+                  </label>
+                </div>
+
+                <label>
+                  <span className="text-xs font-semibold">
+                    Additional notes
+                  </span>
+
+                  <textarea
+                    value={orderForm.notes}
+                    onChange={(event) =>
+                      handleCustomerChange(
+                        "notes",
+                        event.target.value
+                      )
+                    }
+                    placeholder="Any special request, fabric preference, sleeve style, colour, etc."
+                    rows={5}
+                    className="mt-2 w-full resize-none rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-[#b85c78]"
+                  />
+                </label>
+
+                {errorMessage && (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {errorMessage}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="w-full rounded-full bg-[#211b1d] px-6 py-4 text-sm font-semibold text-white transition hover:bg-[#b85c78]"
+                >
+                  Request custom order
+                </button>
+              </form>
+            </section>
           </div>
+
+          {/* RIGHT SIDE ESTIMATE */}
+          <aside className="lg:sticky lg:top-6 lg:h-fit">
+            <div className="rounded-[2rem] bg-[#211b1d] p-6 text-white shadow-xl sm:p-7">
+              <p className="text-xs uppercase tracking-[0.2em] text-white/40">
+                Approximate estimate
+              </p>
+
+              <h2 className="mt-3 text-3xl font-semibold">
+                {formatLKR(estimatedPrice - 1000)}
+                <span className="mx-2 text-white/30">–</span>
+                {formatLKR(estimatedPrice + 1500)}
+              </h2>
+
+              <p className="mt-4 text-xs leading-5 text-white/50">
+                Estimated in Sri Lankan Rupees. This is not the final price.
+              </p>
+
+              <div className="mt-7 space-y-4 border-t border-white/10 pt-6">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-white/55">
+                    Garment
+                  </span>
+
+                  <span>
+                    {
+                      dressTypes.find(
+                        (item) => item.value === dressType
+                      )?.label
+                    }
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-white/55">
+                    Measurements
+                  </span>
+
+                  <span>
+                    {completedMeasurements}/
+                    {currentMeasurements.length}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-white/55">
+                    Front reference
+                  </span>
+
+                  <span>
+                    {frontImage ? "Added" : "Required"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-white/55">
+                    Back reference
+                  </span>
+
+                  <span>
+                    {backImage ? "Added" : "Required"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-7 rounded-2xl bg-white/[0.07] p-4">
+                <p className="text-xs font-semibold">
+                  What's included in the estimate?
+                </p>
+
+                <p className="mt-2 text-xs leading-5 text-white/45">
+                  The estimate considers expected material cost, tailoring
+                  work, delivery and the cost involved in sourcing suitable
+                  materials.
+                </p>
+              </div>
+
+              <div className="mt-5 rounded-2xl bg-[#b85c78] p-4">
+                <p className="text-xs font-semibold">
+                  Final price
+                </p>
+
+                <p className="mt-2 text-xs leading-5 text-white/80">
+                  We will confirm the exact material, design and final price
+                  with you through WhatsApp before production.
+                </p>
+              </div>
+            </div>
+
+            {/* ORDER CHECKLIST */}
+            <div className="mt-5 rounded-[2rem] border border-black/10 bg-white p-6">
+              <h3 className="font-semibold">
+                Before submitting
+              </h3>
+
+              <div className="mt-5 space-y-3">
+                <ChecklistItem
+                  done={Boolean(frontImage)}
+                  text="Front reference image"
+                />
+
+                <ChecklistItem
+                  done={Boolean(backImage)}
+                  text="Back reference image"
+                />
+
+                <ChecklistItem
+                  done={
+                    completedMeasurements ===
+                    currentMeasurements.length
+                  }
+                  text="Required measurements"
+                />
+
+                <ChecklistItem
+                  done={Boolean(orderForm.name.trim())}
+                  text="Customer name"
+                />
+
+                <ChecklistItem
+                  done={Boolean(orderForm.whatsapp.trim())}
+                  text="WhatsApp number"
+                />
+
+                <ChecklistItem
+                  done={
+                    Boolean(orderForm.address.trim()) &&
+                    Boolean(orderForm.city.trim())
+                  }
+                  text="Delivery details"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-[2rem] bg-[#f5eeec] p-6">
+              <p className="text-sm font-semibold">
+                Need help with measurements?
+              </p>
+
+              <p className="mt-2 text-xs leading-5 text-black/45">
+                Select any measurement above to see an explanation of where
+                and how to measure it.
+              </p>
+            </div>
+          </aside>
         </div>
       </section>
     </main>
   );
 }
 
-function ReferenceUpload({
-  title,
-  image,
-  onUpload,
-  onRemove,
-}: {
-  title: string;
-  image: string | null;
-  onUpload: (event: ChangeEvent<HTMLInputElement>) => void;
-  onRemove: () => void;
-}) {
-  return (
-    <div className="relative">
-      {image ? (
-        <div className="relative overflow-hidden rounded-3xl border border-black/10 bg-[#f5eeec]">
-          <img
-            src={image}
-            alt={title}
-            className="aspect-[4/5] w-full object-cover"
-          />
-
-          <button
-            type="button"
-            onClick={onRemove}
-            aria-label={`Remove ${title}`}
-            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-black shadow-lg backdrop-blur transition hover:bg-black hover:text-white"
-          >
-            <X size={15} />
-          </button>
-
-          <div className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-2 text-xs font-medium shadow backdrop-blur">
-            {title}
-          </div>
-        </div>
-      ) : (
-        <label className="flex aspect-[4/5] cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-black/10 bg-[#fffaf9] p-6 text-center transition hover:border-[#b85c78] hover:bg-[#f8e8ed]/40">
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={onUpload}
-          />
-
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f8e8ed] text-[#b85c78]">
-            <Upload size={19} />
-          </div>
-
-          <p className="mt-4 text-sm font-semibold">
-            {title}
-          </p>
-
-          <p className="mt-2 text-xs leading-5 text-black/40">
-            Click to upload
-            <br />
-            JPG, PNG or WEBP
-          </p>
-        </label>
-      )}
-    </div>
-  );
-}
-
-function PreviewStatus({
-  active,
+function ChecklistItem({
+  done,
   text,
 }: {
-  active: boolean;
+  done: boolean;
   text: string;
 }) {
   return (
-    <div
-      className={`flex items-center gap-3 rounded-2xl border p-3 text-left ${
-        active
-          ? "border-green-200 bg-green-50"
-          : "border-black/10 bg-white"
-      }`}
-    >
+    <div className="flex items-center gap-3">
       <div
-        className={`flex h-8 w-8 items-center justify-center rounded-full ${
-          active
-            ? "bg-green-500 text-white"
-            : "bg-black/5 text-black/30"
+        className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
+          done
+            ? "bg-[#b85c78] text-white"
+            : "bg-black/[0.05] text-black/30"
         }`}
       >
-        {active ? <Check size={14} /> : <Camera size={14} />}
+        {done ? "✓" : "•"}
       </div>
 
       <span
-        className={`text-xs font-medium ${
-          active ? "text-green-700" : "text-black/45"
+        className={`text-sm ${
+          done ? "text-black/70" : "text-black/40"
         }`}
       >
         {text}
